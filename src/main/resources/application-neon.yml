@@ -1,0 +1,13 @@
+# Perfil de nube: PostgreSQL alojado en Neon (cuenta gratuita).
+# Las credenciales nunca se versionan: se inyectan por variables de entorno.
+spring:
+  datasource:
+    url: ${DB_URL}
+    driver-class-name: org.postgresql.Driver
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 5
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    show-sql: false

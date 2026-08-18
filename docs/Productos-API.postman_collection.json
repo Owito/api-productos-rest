@@ -1,0 +1,98 @@
+{
+  "info": {
+    "name": "API de Productos - TIC51372 Unidad 2",
+    "description": "Coleccion de pruebas de los servicios RESTful CRUD sobre la entidad Producto. Ejecutar en orden: los tests guardan y reutilizan el id creado.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:8080" },
+    { "key": "productoId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1. POST crear producto",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 201 Created', () => pm.response.to.have.status(201));",
+        "pm.test('Incluye cabecera Location', () => pm.response.to.have.header('Location'));",
+        "const body = pm.response.json();",
+        "pm.collectionVariables.set('productoId', body.id);",
+        "pm.test('Devuelve el producto con id', () => pm.expect(body.id).to.be.a('number'));"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Teclado mecanico 60%\",\n  \"descripcion\": \"Inalambrico, switches lineales, layout ANSI\",\n  \"precio\": 289900.00\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos"] }
+      }
+    },
+    {
+      "name": "2. GET listar productos",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Devuelve un arreglo', () => pm.expect(pm.response.json()).to.be.an('array'));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos"] }
+      }
+    },
+    {
+      "name": "3. GET producto por id",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('El id coincide con el creado', () => pm.expect(String(pm.response.json().id)).to.eql(String(pm.collectionVariables.get('productoId'))));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "{{productoId}}"] }
+      }
+    },
+    {
+      "name": "4. PUT actualizar producto",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('El nombre quedo actualizado', () => pm.expect(pm.response.json().nombre).to.eql('Teclado mecanico 65%'));"
+      ] } }],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"Teclado mecanico 65%\",\n  \"descripcion\": \"Layout compacto con teclas de flecha\",\n  \"precio\": 329900.00\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "{{productoId}}"] }
+      }
+    },
+    {
+      "name": "5. DELETE eliminar producto",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 204 No Content', () => pm.response.to.have.status(204));"
+      ] } }],
+      "request": {
+        "method": "DELETE",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/{{productoId}}", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "{{productoId}}"] }
+      }
+    },
+    {
+      "name": "6. Error 404 producto inexistente",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 404 Not Found', () => pm.response.to.have.status(404));",
+        "pm.test('Usa el contrato de error de la API', () => pm.expect(pm.response.json()).to.have.property('mensaje'));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "url": { "raw": "{{baseUrl}}/api/v1/productos/999999", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos", "999999"] }
+      }
+    },
+    {
+      "name": "7. Error 400 cuerpo invalido",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Responde 400 Bad Request', () => pm.response.to.have.status(400));",
+        "pm.test('Detalla el error por campo', () => pm.expect(pm.response.json().detalles).to.be.an('array').that.is.not.empty);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"nombre\": \"\",\n  \"descripcion\": \"nombre vacio y precio negativo\",\n  \"precio\": -10\n}" },
+        "url": { "raw": "{{baseUrl}}/api/v1/productos", "host": ["{{baseUrl}}"], "path": ["api", "v1", "productos"] }
+      }
+    }
+  ]
+}
