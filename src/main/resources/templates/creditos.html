@@ -61,6 +61,10 @@
 			<dt>Repositorio</dt>
 			<dd><a th:href="${creditos.repositorio}" th:text="${creditos.repositorio}" rel="noopener">Repositorio</a></dd>
 		</div>
+		<div th:unless="${#strings.isEmpty(creditos.urlPublica)}">
+			<dt>Aplicacion en linea</dt>
+			<dd><a th:href="${creditos.urlPublica}" th:text="${creditos.urlPublica}" rel="noopener">URL publica</a></dd>
+		</div>
 	</dl>
 
 	<p class="nota-creditos">

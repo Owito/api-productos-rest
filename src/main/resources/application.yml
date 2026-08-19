@@ -73,3 +73,4 @@ app:
     periodo: 2026-2, bloque 1
     fecha-de-entrega: 25 de agosto de 2026
     repositorio: https://github.com/Owito/api-productos-rest
+    url-publica: https://api-productos-rest.onrender.com

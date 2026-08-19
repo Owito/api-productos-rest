@@ -9,6 +9,20 @@ y una interfaz web renderizada en el servidor en `/productos`.
 
 Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sumativa.
 
+## En línea
+
+| | |
+|---|---|
+| Catálogo web | <https://api-productos-rest.onrender.com/productos> |
+| Créditos | <https://api-productos-rest.onrender.com/creditos> |
+| API REST | <https://api-productos-rest.onrender.com/api/v1/productos> |
+| Documentación interactiva | <https://api-productos-rest.onrender.com/swagger-ui.html> |
+| Estado del servicio | <https://api-productos-rest.onrender.com/actuator/health> |
+
+Corre en el plan gratuito de Render contra la base de datos de Neon. Si lleva rato sin visitas, la
+primera petición puede tardar cerca de un minuto: es el arranque en frío de la instancia, no un
+problema de la aplicación.
+
 ---
 
 ## Stack
@@ -228,10 +242,10 @@ base y puede tardar unos segundos.
 
 ## Despliegue
 
-La aplicación se empaqueta con el `Dockerfile` de la raíz y corre en el plan gratuito de Render,
-contra la misma base de datos de Neon. El repositorio trae un `render.yaml`, así que el servicio se
-crea desde un plano y no llenando un formulario. El paso a paso está en
-[`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+La aplicación está desplegada en <https://api-productos-rest.onrender.com>. Se empaqueta con el
+`Dockerfile` de la raíz y corre en el plan gratuito de Render, contra la misma base de datos de
+Neon. El repositorio trae un `render.yaml`, así que el servicio se crea desde un plano y no
+llenando un formulario. El paso a paso está en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
 
 Para construir y ejecutar la imagen en local:
 

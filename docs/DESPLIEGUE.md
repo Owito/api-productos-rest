@@ -3,6 +3,9 @@
 La aplicación se empaqueta con el `Dockerfile` de la raíz y se despliega en el plan gratuito de
 [Render](https://render.com), contra la misma base de datos de Neon.
 
+**Servicio en producción:** <https://api-productos-rest.onrender.com>
+(`srv-da2nrurl550s73cavaj0`, plano `exs-da2hrdlg1s2s73cppqbg`, región Ohio).
+
 > Se evaluó Koyeb primero, porque su capa gratuita no dormía el servicio. **Dejó de ser viable:**
 > la plataforma fue adquirida por Mistral y su consola ya no permite crear servicios. Render no
 > tiene esa limitación de disponibilidad, pero sí duerme el servicio por inactividad, y eso se
@@ -45,9 +48,9 @@ Para activarlo hay que crear **una variable de repositorio** en GitHub:
 
 | Nombre | Valor |
 |---|---|
-| `URL_APP` | `https://api-productos-rest.onrender.com` (la URL real que asigne Render) |
+| `URL_APP` | `https://api-productos-rest.onrender.com` |
 
-Sin esa variable el workflow no falla: avisa y no hace nada.
+Sin esa variable el workflow no falla: avisa y no hace nada. Ya está creada.
 
 ### Por qué el horario no es de 24 horas
 
@@ -64,16 +67,21 @@ workflow a `*/10 * * * *` y quedará despierto todo el día.
 
 ## Verificar que quedó bien
 
-Reemplazar `<url>` por el dominio que asigne Render.
-
 ```bash
-curl -i https://<url>/actuator/health          # {"status":"UP"}
-curl https://<url>/api/v1/productos            # 18 productos
-curl https://<url>/api/v1/productos/categorias # las ocho categorias
-curl -o /dev/null -s -w "%{http_code}\n" https://<url>/productos   # 200, interfaz web
+B=https://api-productos-rest.onrender.com
+curl -i $B/actuator/health           # {"status":"UP"}
+curl $B/api/v1/productos             # 18 productos
+curl $B/api/v1/productos/categorias  # las ocho categorias
+curl "$B/api/v1/productos?categoria=AUDIO"   # filtro por categoria
+curl -o /dev/null -s -w "%{http_code}\n" $B/productos   # 200, interfaz web
 ```
 
 En el navegador: `/productos` (catálogo), `/creditos` y `/swagger-ui.html`.
+
+Verificado el 19 de agosto de 2026 contra el despliegue real: los cinco endpoints en 200, el
+catálogo sembrado con 18 productos, el filtro por categoría, el ciclo completo POST/PUT/DELETE, y
+el manejo de errores devolviendo 400 con datos inválidos, 404 con un id inexistente y 409 con un
+nombre duplicado.
 
 ## Qué esperar
 

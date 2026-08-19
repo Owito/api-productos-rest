@@ -21,4 +21,5 @@ data class CreditosProperties(
 	val periodo: String = "",
 	val fechaDeEntrega: String = "",
 	val repositorio: String = "",
+	val urlPublica: String = "",
 )
