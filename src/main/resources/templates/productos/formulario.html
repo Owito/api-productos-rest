@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/comunes :: cabeza(${modoEdicion} ? 'Editar producto' : 'Nuevo producto')}"></head>
+<body>
+
+<header th:replace="~{fragmentos/comunes :: encabezado}"></header>
+
+<main class="contenedor">
+
+	<div class="barra">
+		<h2 th:text="${modoEdicion} ? 'Editar producto' : 'Nuevo producto'">Nuevo producto</h2>
+		<a class="boton boton--secundario" th:href="@{/productos}">Volver al listado</a>
+	</div>
+
+	<p class="aviso aviso--error" role="alert"
+	   th:if="${#fields.hasGlobalErrors()}"
+	   th:each="err : ${#fields.globalErrors()}" th:text="${err}"></p>
+
+	<form class="formulario"
+	      th:object="${producto}"
+	      th:action="${modoEdicion} ? @{/productos/{id}(id=*{id})} : @{/productos}"
+	      th:method="${modoEdicion} ? 'put' : 'post'">
+
+		<div class="campo" th:classappend="${#fields.hasErrors('nombre')} ? 'campo--invalido'">
+			<label for="nombre">Nombre</label>
+			<input type="text" id="nombre" th:field="*{nombre}" maxlength="120"
+			       autocomplete="off" aria-describedby="ayuda-nombre"
+			       th:aria-invalid="${#fields.hasErrors('nombre')} ? 'true' : 'false'">
+			<span class="ayuda" id="ayuda-nombre">Maximo 120 caracteres. No puede repetirse.</span>
+			<span class="error-campo" th:if="${#fields.hasErrors('nombre')}" th:errors="*{nombre}"></span>
+		</div>
+
+		<div class="campo" th:classappend="${#fields.hasErrors('descripcion')} ? 'campo--invalido'">
+			<label for="descripcion">Descripcion</label>
+			<textarea id="descripcion" th:field="*{descripcion}" maxlength="500"
+			          aria-describedby="ayuda-descripcion"
+			          th:aria-invalid="${#fields.hasErrors('descripcion')} ? 'true' : 'false'"></textarea>
+			<span class="ayuda" id="ayuda-descripcion">Opcional. Maximo 500 caracteres.</span>
+			<span class="error-campo" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}"></span>
+		</div>
+
+		<div class="campo" th:classappend="${#fields.hasErrors('precio')} ? 'campo--invalido'">
+			<label for="precio">Precio</label>
+			<input type="number" id="precio" th:field="*{precio}" step="0.01" min="0.01"
+			       inputmode="decimal" aria-describedby="ayuda-precio"
+			       th:aria-invalid="${#fields.hasErrors('precio')} ? 'true' : 'false'">
+			<span class="ayuda" id="ayuda-precio">Debe ser mayor que cero. Hasta dos decimales.</span>
+			<span class="error-campo" th:if="${#fields.hasErrors('precio')}" th:errors="*{precio}"></span>
+		</div>
+
+		<div class="acciones-formulario">
+			<button type="submit" class="boton" th:text="${modoEdicion} ? 'Guardar cambios' : 'Crear producto'">
+				Crear producto
+			</button>
+			<a class="boton boton--secundario" th:href="@{/productos}">Cancelar</a>
+		</div>
+	</form>
+
+</main>
+
+<footer th:replace="~{fragmentos/comunes :: pie}"></footer>
+
+</body>
+</html>

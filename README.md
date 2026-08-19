@@ -4,6 +4,9 @@ Backend con servicios RESTful que expone operaciones CRUD sobre la entidad `Prod
 construido con **Spring Boot + Kotlin** bajo **arquitectura hexagonal**, persistencia mediante
 **ORM (Spring Data JPA sobre Hibernate)** y base de datos **PostgreSQL** alojada en Neon.
 
+El mismo nucleo se expone por **dos adaptadores de entrada**: una API REST en `/api/v1/productos`
+y una interfaz web renderizada en el servidor en `/productos`.
+
 Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sumativa.
 
 ---
@@ -18,6 +21,7 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 | Base de datos | PostgreSQL (Neon, capa gratuita) | Relacional, gestionada, con conexión TLS |
 | Base de datos local | H2 en memoria | El proyecto se clona y se ejecuta sin configurar credenciales |
 | Documentación y pruebas | springdoc OpenAPI + Swagger UI | Cliente HTTP embebido para probar los endpoints |
+| Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
 
 ## Arquitectura
@@ -38,11 +42,15 @@ src/main/kotlin/co/edu/poli/productos/
 |   +-- service/ProductoService.kt             implementa el caso de uso
 |
 +-- infrastructure/                          ADAPTADORES. Aqui vive la tecnologia
-    +-- input/rest/                          adaptador de entrada
+    +-- input/rest/                          adaptador de entrada 1: API REST
     |   +-- ProductoRestAdapter.kt             @RestController
     |   +-- dto/                               contrato publico de la API
     |   +-- mapper/                            DTO  <->  dominio
     |   +-- error/                             traduce excepciones a HTTP
+    +-- input/web/                           adaptador de entrada 2: interfaz web
+    |   +-- ProductoWebAdapter.kt              @Controller sobre el MISMO puerto
+    |   +-- form/                              enlace de los formularios HTML
+    |   +-- ManejadorDeErroresWeb.kt           errores como paginas, no como JSON
     +-- output/persistence/                  adaptador de salida
     |   +-- ProductoPersistenceAdapter.kt      implementa el puerto de salida
     |   +-- entity/ProductoJpaEntity.kt        entidad JPA, detalle de infraestructura
@@ -59,6 +67,10 @@ Las tres reglas que sostienen la estructura:
    aplicacion y la infraestructura se adapta a ella. Las dependencias apuntan hacia adentro.
 3. **La aplicacion no conoce Spring.** `ProductoService` no lleva `@Service`: se registra como
    bean en `infrastructure/config/ConfiguracionDeCasosDeUso`.
+
+Los dos adaptadores de entrada son la prueba de que el patron funciona: agregar la interfaz web
+no cambio ni una linea del dominio, de la capa de aplicacion ni del adaptador de persistencia.
+Un producto creado desde el formulario aparece en la API, y al reves.
 
 La consecuencia practica es que el nucleo se prueba sin levantar Spring, sin base de datos y sin
 HTTP, contra un adaptador falso en memoria. El razonamiento completo, con las alternativas
@@ -116,6 +128,33 @@ Todos los fallos responden con la misma estructura:
 }
 ```
 
+## Interfaz web
+
+Segundo adaptador de entrada, renderizado en el servidor con Thymeleaf. Consume el mismo puerto
+`GestionarProductosUseCase` que la API REST.
+
+| Ruta | Metodo | Que hace |
+|---|---|---|
+| `/` | `GET` | Redirige al listado |
+| `/productos` | `GET` | Listado de productos |
+| `/productos/nuevo` | `GET` | Formulario de creacion |
+| `/productos` | `POST` | Crea el producto |
+| `/productos/{id}/editar` | `GET` | Formulario con los datos cargados |
+| `/productos/{id}` | `PUT` | Actualiza el producto |
+| `/productos/{id}` | `DELETE` | Elimina el producto |
+
+Los formularios HTML solo soportan `GET` y `POST`, asi que `PUT` y `DELETE` viajan en un campo
+oculto `_method` que Spring traduce con `HiddenHttpMethodFilter`. La interfaz usa asi los mismos
+verbos que la API.
+
+Diferencia deliberada entre los dos adaptadores: el REST deja que las excepciones de dominio
+lleguen al manejador global y se conviertan en 404 o 409. El web las atrapa y repinta el
+formulario con el error junto al campo que lo causo, porque una persona frente a un formulario no
+necesita un codigo de estado, necesita saber que corregir.
+
+No hay CSS ni JavaScript de terceros: una hoja de estilos propia, mobile first, con tema claro y
+oscuro segun la preferencia del sistema.
+
 ## Cómo ejecutar
 
 Requisito único: **JDK 17** o superior. Gradle lo aporta el wrapper.
@@ -126,7 +165,8 @@ Requisito único: **JDK 17** o superior. Gradle lo aporta el wrapper.
 ./gradlew bootRun
 ```
 
-La aplicación queda en `http://localhost:8080`. La consola de H2 está en `/h2-console`
+La aplicación queda en `http://localhost:8080`: la interfaz web en `/productos` y la API en
+`/api/v1/productos`. La consola de H2 está en `/h2-console`
 (JDBC URL `jdbc:h2:mem:productos`, usuario `sa`, sin contraseña).
 
 ### Perfil de nube (PostgreSQL en Neon)
@@ -157,13 +197,14 @@ base y puede tardar unos segundos.
 ./gradlew test
 ```
 
-23 pruebas repartidas segun la arquitectura:
+32 pruebas repartidas segun la arquitectura:
 
 | Suite | Pruebas | Levanta Spring |
 |---|---|---|
 | `ProductoTest` (dominio) | 6 | no |
 | `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 8 | no |
-| `ProductoRestAdapterTest` (integracion, los 4 verbos y los errores) | 8 | si |
+| `ProductoRestAdapterTest` (integracion REST, los 4 verbos y los errores) | 8 | si |
+| `ProductoWebAdapterTest` (integracion web, formularios y _method) | 9 | si |
 | `ProductosApplicationTests` (carga de contexto) | 1 | si |
 
 Las 14 pruebas del nucleo corren sin contenedor de dependencias ni base de datos. Eso es lo que

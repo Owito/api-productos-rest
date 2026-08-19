@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/comunes :: cabeza('Producto no encontrado')}"></head>
+<body>
+
+<header th:replace="~{fragmentos/comunes :: encabezado}"></header>
+
+<main class="contenedor">
+	<div class="barra">
+		<h2>No encontrado</h2>
+	</div>
+
+	<p class="aviso aviso--error" role="alert"
+	   th:text="${mensaje} ?: 'El recurso solicitado no existe.'">El recurso solicitado no existe.</p>
+
+	<p>
+		Es posible que el producto se haya eliminado desde otra pestana o desde la API REST.
+	</p>
+
+	<p>
+		<a class="boton" th:href="@{/productos}">Volver al listado</a>
+	</p>
+</main>
+
+<footer th:replace="~{fragmentos/comunes :: pie}"></footer>
+
+</body>
+</html>

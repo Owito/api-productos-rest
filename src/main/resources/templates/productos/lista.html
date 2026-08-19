@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/comunes :: cabeza('Productos')}"></head>
+<body>
+
+<header th:replace="~{fragmentos/comunes :: encabezado}"></header>
+
+<main class="contenedor">
+
+	<p class="aviso" role="status" th:if="${mensaje}" th:text="${mensaje}"></p>
+
+	<div class="barra">
+		<h2>Productos</h2>
+		<span class="conteo"
+		      th:text="${#lists.size(productos)} + (${#lists.size(productos)} == 1 ? ' producto registrado' : ' productos registrados')">
+			0 productos registrados
+		</span>
+		<a class="boton" th:href="@{/productos/nuevo}">Nuevo producto</a>
+	</div>
+
+	<p class="vacio" th:if="${#lists.isEmpty(productos)}">
+		Todavia no hay productos registrados. Crea el primero para verlo aqui.
+	</p>
+
+	<ul class="fichas" th:unless="${#lists.isEmpty(productos)}">
+		<li class="ficha" th:each="producto : ${productos}">
+			<span class="ficha__identificador" th:text="'ID ' + ${producto.id}">ID 1</span>
+			<h3 class="ficha__nombre" th:text="${producto.nombre}">Nombre del producto</h3>
+			<p class="ficha__descripcion"
+			   th:text="${producto.descripcion} ?: 'Sin descripcion'">Descripcion</p>
+			<p class="ficha__precio"
+			   th:text="'$ ' + ${#numbers.formatDecimal(producto.precio, 1, 'POINT', 2, 'COMMA')}">$ 0,00</p>
+			<div class="ficha__acciones">
+				<a class="boton boton--secundario boton--pequeno"
+				   th:href="@{/productos/{id}/editar(id=${producto.id})}"
+				   th:aria-label="'Editar ' + ${producto.nombre}">Editar</a>
+				<!-- El texto de la confirmacion es estatico a proposito: Thymeleaf no admite
+				     expresiones de tipo texto en atributos de evento, para evitar inyeccion. -->
+				<form th:action="@{/productos/{id}(id=${producto.id})}" th:method="delete"
+				      onsubmit="return confirm('Se va a eliminar este producto. La accion no se puede deshacer.')">
+					<button type="submit" class="boton boton--peligro boton--pequeno"
+					        th:aria-label="'Eliminar ' + ${producto.nombre}">Eliminar</button>
+				</form>
+			</div>
+		</li>
+	</ul>
+
+</main>
+
+<footer th:replace="~{fragmentos/comunes :: pie}"></footer>
+
+</body>
+</html>

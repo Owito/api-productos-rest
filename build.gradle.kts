@@ -29,6 +29,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	// Documentacion y cliente HTTP embebido (Swagger UI)
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
+	// Segundo adaptador de entrada: interfaz web renderizada en el servidor
+	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")

@@ -12,11 +12,22 @@ spring:
         format_sql: true
   mvc:
     throw-exception-if-no-handler-found: true
+    hiddenmethod:
+      filter:
+        # Permite que los formularios HTML, que solo soportan GET y POST, emitan
+        # PUT y DELETE mediante un campo _method. El adaptador web usa asi los
+        # mismos verbos que el adaptador REST.
+        enabled: true
   jackson:
     default-property-inclusion: non_null
 
 server:
   port: ${PORT:8080}
+  servlet:
+    session:
+      # Solo cookies: evita que el identificador de sesion se reescriba en la URL,
+      # donde se filtraria por los logs y por la cabecera Referer.
+      tracking-modes: cookie
   error:
     include-stacktrace: never    # nunca se filtra la traza de pila al cliente
 

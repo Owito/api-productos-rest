@@ -20,7 +20,8 @@ Se adopta **arquitectura hexagonal**, también llamada puertos y adaptadores.
 ```
                    ┌──────────────── infrastructure ────────────────┐
                    │                                                │
-  HTTP  ──────▶  ProductoRestAdapter                                │
+  JSON  ──────▶  ProductoRestAdapter                                │
+  HTML  ──────▶  ProductoWebAdapter                                 │
                    │        │                                       │
                    │        ▼                                       │
                    │  ┌── GestionarProductosUseCase ◀── puerto de entrada
@@ -75,8 +76,12 @@ Hay tres modelos deliberadamente distintos, cada uno con un dueño:
   un adaptador falso en memoria de veinte líneas, y `ProductoTest` prueba las invariantes en
   milisegundos. Eso no es un detalle de comodidad: es la evidencia de que la inversión de
   dependencias es real y no decorativa.
-- Cambiar PostgreSQL por MongoDB, o agregar una CLI junto a la API REST, significa escribir otro
-  adaptador sin tocar el caso de uso.
+- Cambiar PostgreSQL por MongoDB, o agregar otra forma de entrar, significa escribir otro
+  adaptador sin tocar el caso de uso. **Esto ya se comprobo en la practica:** despues de terminar
+  la API REST se agrego una interfaz web con Thymeleaf (`infrastructure/input/web`) que consume el
+  mismo puerto `GestionarProductosUseCase`, y no hubo que modificar ni una linea del dominio, de
+  la capa de aplicacion ni del adaptador de persistencia. Un producto creado desde el formulario
+  aparece en la API, y al reves.
 - Las reglas de negocio están en un solo lugar y no se pueden saltar desde otro punto de entrada.
 
 **En contra, y hay que decirlo:**

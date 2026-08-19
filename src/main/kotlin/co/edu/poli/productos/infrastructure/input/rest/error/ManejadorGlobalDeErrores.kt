@@ -18,10 +18,12 @@ import org.springframework.web.servlet.NoHandlerFoundException
  * Traduce las excepciones del dominio a codigos de estado HTTP.
  *
  * Esta clase es la frontera: el nucleo lanza hechos del negocio y aqui, y solo
- * aqui, se convierten en 404, 409 o 400. Ningun adaptador atrapa excepciones
- * por su cuenta.
+ * aqui, se convierten en 404, 409 o 400.
+ *
+ * Esta acotado por paquete a proposito. Sin ese limite tambien atenderia al
+ * adaptador web, que necesita responder HTML y no JSON.
  */
-@RestControllerAdvice
+@RestControllerAdvice(basePackages = ["co.edu.poli.productos.infrastructure.input.rest"])
 class ManejadorGlobalDeErrores {
 
 	private val log = LoggerFactory.getLogger(javaClass)

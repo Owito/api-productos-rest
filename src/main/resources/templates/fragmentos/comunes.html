@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:fragment="cabeza(titulo)">
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title th:text="${titulo} + ' | API de Productos'">API de Productos</title>
+	<link rel="stylesheet" th:href="@{/css/estilos.css}">
+</head>
+<body>
+
+<header class="encabezado" th:fragment="encabezado">
+	<div class="contenedor">
+		<h1 class="marca"><a th:href="@{/productos}">API de Productos</a></h1>
+		<p class="subtitulo">Arquitectura de Aplicaciones Web &middot; Unidad 2</p>
+	</div>
+</header>
+
+<footer class="pie" th:fragment="pie">
+	<div class="contenedor">
+		<span>Adaptador web sobre el mismo nucleo hexagonal que la API REST.</span>
+		<a th:href="@{/swagger-ui.html}">Documentacion de la API</a>
+		<a th:href="@{/api/v1/productos}">Ver el JSON del listado</a>
+	</div>
+</footer>
+
+</body>
+</html>
