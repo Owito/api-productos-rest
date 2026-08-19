@@ -20,7 +20,7 @@ COPY src src
 # Las pruebas ya corrieron antes de llegar aqui: la imagen no debe depender de
 # una base de datos para poder construirse.
 RUN ./gradlew --no-daemon --quiet bootJar -x test \
-	&& cp build/libs/*[!plain].jar aplicacion.jar
+	&& cp build/libs/*.jar aplicacion.jar
 
 # ---------- Etapa 2: ejecucion ----------
 FROM eclipse-temurin:17-jre-alpine AS ejecucion
