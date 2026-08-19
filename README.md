@@ -24,7 +24,7 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 | Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
 | Empaquetado | Docker multietapa | La imagen final lleva solo el JRE y el `.jar` |
-| Despliegue | Koyeb, plan gratuito | Un servicio que no se duerme por inactividad, sin tarjeta |
+| Despliegue | Render, plan gratuito | Sin tarjeta, con la configuración versionada en `render.yaml` |
 
 ## Arquitectura
 
@@ -228,9 +228,10 @@ base y puede tardar unos segundos.
 
 ## Despliegue
 
-La aplicación se empaqueta con el `Dockerfile` de la raíz y corre en el plan gratuito de Koyeb,
-contra la misma base de datos de Neon. El paso a paso, incluidas las variables de entorno y el
-periodo de gracia del chequeo de salud, está en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+La aplicación se empaqueta con el `Dockerfile` de la raíz y corre en el plan gratuito de Render,
+contra la misma base de datos de Neon. El repositorio trae un `render.yaml`, así que el servicio se
+crea desde un plano y no llenando un formulario. El paso a paso está en
+[`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
 
 Para construir y ejecutar la imagen en local:
 
@@ -242,6 +243,11 @@ docker run --rm -p 8080:8080 --env-file .env -e APP_DATOS_DEMO=true api-producto
 La imagen final lleva solo el JRE y el `.jar`: ni código fuente, ni Gradle, ni el compilador de
 Kotlin. Corre con un usuario sin privilegios y expone `/actuator/health` para que la plataforma
 sepa si la instancia está viva. Ningún otro endpoint del actuator queda accesible.
+
+El plan gratuito duerme el servicio tras 15 minutos sin tráfico. El workflow
+`.github/workflows/mantener-despierto.yml` lo pinga cada 10 minutos entre las 7:00 y las 23:00 de
+Bogotá, horario acotado a propósito porque las 750 horas mensuales de Render son por cuenta y no
+por servicio.
 
 > **La API pública no tiene autenticación.** Cualquiera puede crear, editar y borrar productos.
 > Es una decisión consciente para que la demostración se pueda probar; los datos son de ejemplo y

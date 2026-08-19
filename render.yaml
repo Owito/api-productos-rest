@@ -1,0 +1,37 @@
+# Plano de infraestructura para Render.
+#
+# Con este archivo el despliegue se crea desde "New > Blueprint" apuntando al
+# repositorio, en vez de llenar el formulario a mano. Queda versionado, asi que
+# el servicio es reproducible y los cambios de configuracion pasan por revision.
+
+services:
+  - type: web
+    name: api-productos-rest
+    runtime: docker
+    plan: free
+    # Ohio es la region de Render mas cercana a la base de datos de Neon, que
+    # esta en us-east-2. Elegir otra agrega latencia en cada consulta.
+    region: ohio
+    branch: main
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: neon
+
+      # Siembra el catalogo de ejemplo si la tabla esta vacia.
+      - key: APP_DATOS_DEMO
+        value: "true"
+
+      - key: DB_URL
+        value: jdbc:postgresql://ep-broad-hill-axib2mo6.c-4.us-east-2.aws.neon.tech/neondb?sslmode=require
+
+      - key: DB_USERNAME
+        value: neondb_owner
+
+      # sync: false hace que Render pida el valor al crear el plano y lo guarde
+      # cifrado. La contrasena nunca entra al repositorio.
+      - key: DB_PASSWORD
+        sync: false

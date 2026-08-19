@@ -1,78 +1,70 @@
-# Despliegue en Koyeb
+# Despliegue en Render
 
 La aplicación se empaqueta con el `Dockerfile` de la raíz y se despliega en el plan gratuito de
-[Koyeb](https://www.koyeb.com), que a diferencia de otras capas gratuitas **no duerme el servicio
-por inactividad**. La base de datos sigue siendo la de Neon.
+[Render](https://render.com), contra la misma base de datos de Neon.
+
+> Se evaluó Koyeb primero, porque su capa gratuita no dormía el servicio. **Dejó de ser viable:**
+> la plataforma fue adquirida por Mistral y su consola ya no permite crear servicios. Render no
+> tiene esa limitación de disponibilidad, pero sí duerme el servicio por inactividad, y eso se
+> compensa con el workflow de mantenimiento descrito abajo.
 
 ---
 
 ## Antes de empezar
 
-- La rama `main` del repositorio está al día. Koyeb construye desde ahí.
-- La cadena de conexión de Neon a mano. Está en el `.env` local, que **no** se versiona ni entra
-  a la imagen (`.dockerignore` lo excluye).
+- La rama `main` está al día. Render construye desde ahí.
+- La cadena de conexión de Neon a mano. Vive en el `.env` local, que **no** se versiona ni entra a
+  la imagen (`.dockerignore` lo excluye).
 
-## Camino corto: la consola de Koyeb
+## Crear el servicio
 
-1. Entrar a [app.koyeb.com](https://app.koyeb.com) e iniciar sesión con GitHub.
-2. **Create Service** → **Web Service** → **GitHub** → repositorio `Owito/api-productos-rest`,
-   rama `main`.
-3. **Builder:** elegir **Dockerfile**. Koyeb detecta el de la raíz; no hace falta indicar ruta.
-4. **Instance:** `Free`. **Region:** `Washington, D.C.` (`was`), que es la más cercana a la base de
-   datos de Neon en `us-east-2` y evita cruzar el Atlántico en cada consulta.
-5. **Exposed port:** `8080`, protocolo HTTP, ruta `/`.
-6. **Health check:** HTTP sobre el puerto `8080`, ruta `/actuator/health`.
-   **Grace period: 300 segundos.** Este es el ajuste que más se olvida: la instancia gratuita tiene
-   una décima de vCPU y la JVM tarda varios minutos en levantar ahí. Con el periodo de gracia por
-   defecto, Koyeb mata el contenedor antes de que alcance a arrancar y entra en un ciclo de
-   reinicios que parece un error de la aplicación sin serlo.
-7. **Environment variables:**
+El repositorio trae un `render.yaml`, así que el camino corto es un plano:
 
-   | Variable | Valor | Tipo |
-   |---|---|---|
-   | `SPRING_PROFILES_ACTIVE` | `neon` | Plain |
-   | `DB_URL` | `jdbc:postgresql://<host>.neon.tech/neondb?sslmode=require` | Plain |
-   | `DB_USERNAME` | `neondb_owner` | Plain |
-   | `DB_PASSWORD` | la contraseña de Neon | **Secret** |
-   | `APP_DATOS_DEMO` | `true` | Plain |
+1. Entrar a [dashboard.render.com](https://dashboard.render.com) e iniciar sesión con GitHub.
+2. **New** → **Blueprint** → elegir el repositorio `Owito/api-productos-rest`.
+3. Render lee `render.yaml` y propone el servicio ya configurado: Docker, plan gratuito, región
+   Ohio, chequeo de salud en `/actuator/health` y las variables de entorno.
+4. Pedirá **un solo valor**: `DB_PASSWORD`, porque está marcada con `sync: false` justamente para
+   que la contraseña no viva en el repositorio. Pegar ahí la de Neon.
+5. **Apply**. La primera construcción tarda varios minutos: descarga Gradle y las dependencias.
+   Las siguientes reutilizan la caché de capas.
 
-   `DB_PASSWORD` va como **Secret**, no como variable normal: así no queda visible en la
-   configuración del servicio ni en los registros.
+Si se prefiere el formulario manual (**New** → **Web Service**), la configuración equivalente es
+runtime Docker, plan Free, región Ohio, rama `main`, health check `/actuator/health`, y las cinco
+variables de entorno de `render.yaml`.
 
-   No hay que definir `PORT`: Koyeb la inyecta y la aplicación la lee (`server.port: ${PORT:8080}`).
+## Mantener el servicio despierto
 
-8. **Deploy.** La primera construcción tarda varios minutos porque descarga Gradle y las
-   dependencias. Las siguientes reutilizan la caché de capas.
+El plan gratuito duerme el servicio tras 15 minutos sin tráfico y despertarlo tarda cerca de un
+minuto, lo que arruina la primera impresión de quien entra a probar.
 
-## Camino alterno: la CLI
+El repositorio incluye `.github/workflows/mantener-despierto.yml`, que lo pinga cada 10 minutos.
+Para activarlo hay que crear **una variable de repositorio** en GitHub:
 
-```bash
-koyeb service create api \
-  --app api-productos-rest \
-  --git github.com/Owito/api-productos-rest \
-  --git-branch main \
-  --git-builder docker \
-  --instance-type free \
-  --regions was \
-  --ports 8080:http \
-  --routes /:8080 \
-  --checks 8080:http:/actuator/health \
-  --env SPRING_PROFILES_ACTIVE=neon \
-  --env DB_URL="jdbc:postgresql://<host>.neon.tech/neondb?sslmode=require" \
-  --env DB_USERNAME=neondb_owner \
-  --env DB_PASSWORD=@db-password \
-  --env APP_DATOS_DEMO=true
-```
+**Settings → Secrets and variables → Actions → Variables → New repository variable**
 
-`@db-password` referencia un secreto creado antes con
-`koyeb secret create db-password --value "<contrasena>"`, para que no quede en el historial del
-terminal.
+| Nombre | Valor |
+|---|---|
+| `URL_APP` | `https://api-productos-rest.onrender.com` (la URL real que asigne Render) |
 
----
+Sin esa variable el workflow no falla: avisa y no hace nada.
+
+### Por qué el horario no es de 24 horas
+
+Render da **750 horas de instancia al mes por cuenta, no por servicio**. Esta cuenta ya tiene otro
+servicio en el plan gratuito, así que mantener este despierto todo el día consumiría la cuota
+completa y dejaría al otro sin margen.
+
+La ventana va de **7:00 a 23:00 de Bogotá**, que es cuando alguien va a estar probando. Fuera de
+ese rango el servicio duerme y no consume horas. Son unas 480 horas al mes, que dejan espacio para
+el otro servicio.
+
+Si en algún momento este es el único servicio gratuito de la cuenta, se puede cambiar el `cron` del
+workflow a `*/10 * * * *` y quedará despierto todo el día.
 
 ## Verificar que quedó bien
 
-Reemplazar `<url>` por el dominio que asigna Koyeb.
+Reemplazar `<url>` por el dominio que asigne Render.
 
 ```bash
 curl -i https://<url>/actuator/health          # {"status":"UP"}
@@ -85,21 +77,21 @@ En el navegador: `/productos` (catálogo), `/creditos` y `/swagger-ui.html`.
 
 ## Qué esperar
 
-- **La primera petición después del despliegue puede tardar.** Con una décima de vCPU la JVM
-  arranca lento. Una vez arriba, el servicio se queda arriba: el plan gratuito de Koyeb no lo
-  duerme.
-- **La base se puebla sola.** `APP_DATOS_DEMO=true` siembra 18 productos si la tabla está vacía.
-  Si alguien borra todo probando, el catálogo vuelve en el siguiente reinicio del servicio.
+- **La primera petición después de un periodo dormido tarda cerca de un minuto.** Es el arranque en
+  frío del plan gratuito, no un problema de la aplicación. Con el workflow activo casi nunca pasa
+  dentro de la ventana horaria.
+- **La base se puebla sola.** `APP_DATOS_DEMO=true` siembra 18 productos si la tabla está vacía. Si
+  alguien borra todo probando, el catálogo vuelve en el siguiente arranque del servicio.
 - **La API está abierta a propósito.** No hay autenticación: cualquiera puede crear, editar y
   borrar. Es una demostración con datos de ejemplo, y esa es la decisión tomada. Si algún día se
   publica algo que importe, esto tiene que cambiar antes.
 
 ## Actualizar
 
-Koyeb queda enganchado a la rama `main`: cada `git push` dispara una construcción y un despliegue
-nuevos. Para desplegar sin empujar código, **Redeploy** en la consola.
+`autoDeploy: true` deja el servicio enganchado a `main`: cada `git push` dispara una construcción y
+un despliegue. Para desplegar sin empujar código, **Manual Deploy** en el panel de Render.
 
 ## Costos
 
-Plan gratuito de Koyeb: un servicio con instancia `free`. Neon: capa gratuita, 0,5 GB de
-almacenamiento. Ninguno de los dos pide tarjeta ni genera cobro con este uso.
+Render: plan gratuito, sin tarjeta. Neon: capa gratuita, 0,5 GB de almacenamiento. Ninguno de los
+dos genera cobro con este uso.

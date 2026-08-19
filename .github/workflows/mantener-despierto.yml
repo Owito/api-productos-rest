@@ -1,0 +1,52 @@
+name: Mantener despierto
+
+# El plan gratuito de Render duerme el servicio tras 15 minutos sin trafico, y
+# despertarlo tarda cerca de un minuto. Este trabajo lo pinga para que quien
+# entre a probar la demostracion la encuentre lista.
+#
+# El horario NO es de 24 horas a proposito. Render da 750 horas de instancia al
+# mes POR CUENTA, no por servicio, y esa cuenta ya tiene otro servicio gratuito.
+# Mantener este despierto todo el dia consumiria la cuota completa y dejaria al
+# otro sin margen. La ventana cubre de 7:00 a 23:00 de Bogota, que es cuando
+# alguien va a estar probando; fuera de ese rango el servicio duerme y no gasta.
+
+on:
+  schedule:
+    # UTC. 12:00-03:59 UTC equivale a 07:00-22:59 en Bogota (UTC-5).
+    - cron: '*/10 0-3,12-23 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pingear:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Verificar que la URL este configurada
+        id: configuracion
+        env:
+          URL_APP: ${{ vars.URL_APP }}
+        run: |
+          if [ -z "$URL_APP" ]; then
+            echo "::warning::Falta la variable de repositorio URL_APP. Se omite el ping."
+            echo "continuar=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "continuar=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Despertar el servicio
+        if: steps.configuracion.outputs.continuar == 'true'
+        env:
+          URL_APP: ${{ vars.URL_APP }}
+        run: |
+          # --max-time generoso: si el servicio estaba dormido, esta peticion es
+          # justamente la que paga el arranque en frio.
+          codigo=$(curl -sS -o /dev/null -w '%{http_code}' --max-time 120 \
+            --retry 2 --retry-delay 15 "$URL_APP/actuator/health")
+          echo "Respuesta de $URL_APP/actuator/health: $codigo"
+          if [ "$codigo" != "200" ]; then
+            echo "::error::El servicio no respondio 200 (fue $codigo)."
+            exit 1
+          fi
