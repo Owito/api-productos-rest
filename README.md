@@ -23,6 +23,9 @@ Corre en el plan gratuito de Render contra la base de datos de Neon. Si lleva ra
 primera petición puede tardar cerca de un minuto: es el arranque en frío de la instancia, no un
 problema de la aplicación.
 
+Los cuatro verbos, el filtro por categoría y los códigos `400`, `404` y `409` están verificados
+contra este despliegue, no solo en local.
+
 ---
 
 ## Stack
@@ -255,13 +258,37 @@ docker run --rm -p 8080:8080 --env-file .env -e APP_DATOS_DEMO=true api-producto
 ```
 
 La imagen final lleva solo el JRE y el `.jar`: ni código fuente, ni Gradle, ni el compilador de
-Kotlin. Corre con un usuario sin privilegios y expone `/actuator/health` para que la plataforma
-sepa si la instancia está viva. Ningún otro endpoint del actuator queda accesible.
+Kotlin. Corre con un usuario sin privilegios. Del actuator solo se expone `health`; ningún otro
+endpoint queda accesible.
+
+El servicio se conectó apuntando al **repositorio público por URL**, y no a través de la aplicación
+de GitHub de Render, para no ampliar los permisos que Render tiene sobre la cuenta. El costo de esa
+decisión es que Render no puede instalar el webhook, así que **el auto-despliegue no funciona** y
+cada actualización se dispara con *Manual Deploy*.
 
 El plan gratuito duerme el servicio tras 15 minutos sin tráfico. El workflow
 `.github/workflows/mantener-despierto.yml` lo pinga cada 10 minutos entre las 7:00 y las 23:00 de
 Bogotá, horario acotado a propósito porque las 750 horas mensuales de Render son por cuenta y no
 por servicio.
+
+### Dos sondas de salud, y no es un detalle menor
+
+`/actuator/health` es un chequeo **compuesto**: incluye el indicador de la base de datos, que lanza
+una consulta de validación. Neon suspende el cómputo por inactividad en la capa gratuita, así que
+esa consulta se queda esperando mientras la base despierta. Una plataforma que vigile ese endpoint
+concluye que el despliegue falló **aunque la aplicación esté perfectamente viva**.
+
+Pasó exactamente eso: un despliegue terminó en `Timed Out` mientras el log decía
+`Started ProductosApplicationKt in 69.189 seconds`. El reparto correcto es este:
+
+| Sonda | Quién la consulta | Qué responde |
+|---|---|---|
+| `/actuator/health/liveness` | Render y el `HEALTHCHECK` del contenedor | El proceso está vivo, no hay que reiniciarlo |
+| `/actuator/health` | El workflow de mantenimiento y las personas | La aplicación **y su base de datos** responden |
+
+Un chequeo de plataforma decide reinicios, no diagnostica dependencias. El ping del cron sí va al
+compuesto a propósito, para que ese mismo tráfico mantenga despierta también la base de datos.
+Con la separación aplicada, el mismo despliegue pasó de fallar tras 15m55s a quedar sano en 1m33s.
 
 > **La API pública no tiene autenticación.** Cualquiera puede crear, editar y borrar productos.
 > Es una decisión consciente para que la demostración se pueda probar; los datos son de ejemplo y
