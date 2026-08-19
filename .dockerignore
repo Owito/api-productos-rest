@@ -1,0 +1,28 @@
+# Nada de esto debe entrar a la imagen.
+.git
+.gitignore
+.gitattributes
+.github
+
+# Credenciales: jamas dentro de la imagen.
+.env
+.env.local
+*.env
+!.env.example
+
+# Artefactos de compilacion: la imagen los produce ella misma.
+build/
+.gradle/
+.kotlin/
+out/
+bin/
+
+# Entornos de desarrollo
+.idea/
+.vscode/
+*.iml
+
+# Documentacion y scripts que no hacen falta en tiempo de ejecucion
+docs/
+README.md
+run-neon.ps1

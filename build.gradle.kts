@@ -27,6 +27,8 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-data-jpa")
 	// Validacion declarativa de los DTO de entrada
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	// Chequeo de salud para la plataforma de despliegue
+	implementation("org.springframework.boot:spring-boot-starter-actuator")
 	// Documentacion y cliente HTTP embebido (Swagger UI)
 	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
 	// Segundo adaptador de entrada: interfaz web renderizada en el servidor
@@ -62,4 +64,11 @@ allOpen {
 
 tasks.withType<Test> {
 	useJUnitPlatform()
+}
+
+// El jar "plain" no se usa: el ejecutable es el que produce bootJar. Apagarlo
+// deja un unico artefacto en build/libs y evita ambiguedades al construir la
+// imagen de Docker.
+tasks.named<Jar>("jar") {
+	enabled = false
 }

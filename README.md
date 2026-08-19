@@ -23,6 +23,8 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 | Documentación y pruebas | springdoc OpenAPI + Swagger UI | Cliente HTTP embebido para probar los endpoints |
 | Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
+| Empaquetado | Docker multietapa | La imagen final lleva solo el JRE y el `.jar` |
+| Despliegue | Koyeb, plan gratuito | Un servicio que no se duerme por inactividad, sin tarjeta |
 
 ## Arquitectura
 
@@ -223,6 +225,27 @@ En Windows PowerShell basta con el script incluido, que lee el `.env`:
 
 Neon suspende el cómputo por inactividad en la capa gratuita: la primera conexión despierta la
 base y puede tardar unos segundos.
+
+## Despliegue
+
+La aplicación se empaqueta con el `Dockerfile` de la raíz y corre en el plan gratuito de Koyeb,
+contra la misma base de datos de Neon. El paso a paso, incluidas las variables de entorno y el
+periodo de gracia del chequeo de salud, está en [`docs/DESPLIEGUE.md`](docs/DESPLIEGUE.md).
+
+Para construir y ejecutar la imagen en local:
+
+```bash
+docker build -t api-productos .
+docker run --rm -p 8080:8080 --env-file .env -e APP_DATOS_DEMO=true api-productos
+```
+
+La imagen final lleva solo el JRE y el `.jar`: ni código fuente, ni Gradle, ni el compilador de
+Kotlin. Corre con un usuario sin privilegios y expone `/actuator/health` para que la plataforma
+sepa si la instancia está viva. Ningún otro endpoint del actuator queda accesible.
+
+> **La API pública no tiene autenticación.** Cualquiera puede crear, editar y borrar productos.
+> Es una decisión consciente para que la demostración se pueda probar; los datos son de ejemplo y
+> el catálogo se repuebla solo.
 
 ## Catálogo de demostración
 

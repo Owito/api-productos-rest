@@ -31,6 +31,19 @@ server:
   error:
     include-stacktrace: never    # nunca se filtra la traza de pila al cliente
 
+# Solo el chequeo de salud queda expuesto. La plataforma de despliegue lo usa
+# para saber si la instancia esta viva; nada mas del actuator sale a internet.
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      probes:
+        enabled: true
+
 springdoc:
   swagger-ui:
     path: /swagger-ui.html
