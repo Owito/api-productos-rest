@@ -94,6 +94,11 @@ Hibernate crea y mantiene la tabla `productos` a partir de la entidad.
 | `nombre` | `VARCHAR(120)` | Obligatorio, único en la práctica (validado en el servicio) |
 | `descripcion` | `VARCHAR(500)` | Opcional |
 | `precio` | `NUMERIC(12,2)` | Obligatorio, mayor que cero |
+| `categoria` | `VARCHAR(30)` | Obligatorio, uno de los ocho valores del catálogo, con índice |
+
+Las categorías son un conjunto cerrado definido en el dominio, no una tabla: `AUDIO`,
+`PERIFERICOS`, `PANTALLAS`, `COMPUTO`, `ALMACENAMIENTO`, `CONECTIVIDAD`, `ENERGIA` y `MOBILIARIO`.
+El porqué está en [`docs/adr/0003`](docs/adr/0003-categoria-como-objeto-de-valor.md).
 
 ## Endpoints
 
@@ -101,7 +106,9 @@ Base: `/api/v1/productos`
 
 | Verbo | Ruta | Descripción | Éxito | Errores |
 |---|---|---|---|---|
-| `GET` | `/api/v1/productos` | Lista todos los productos | `200` | |
+| `GET` | `/api/v1/productos` | Lista los productos | `200` | `400` categoría inexistente |
+| `GET` | `/api/v1/productos?categoria=AUDIO` | Filtra por categoría | `200` | `400` categoría inexistente |
+| `GET` | `/api/v1/productos/categorias` | Lista las categorías disponibles | `200` | |
 | `GET` | `/api/v1/productos/{id}` | Consulta un producto | `200` | `400` id no numérico, `404` no existe |
 | `POST` | `/api/v1/productos` | Crea un producto | `201` + `Location` | `400` datos inválidos, `409` nombre repetido |
 | `PUT` | `/api/v1/productos/{id}` | Actualiza un producto | `200` | `400`, `404`, `409` |
@@ -136,7 +143,8 @@ Segundo adaptador de entrada, renderizado en el servidor con Thymeleaf. Consume 
 | Ruta | Metodo | Que hace |
 |---|---|---|
 | `/` | `GET` | Redirige al listado |
-| `/productos` | `GET` | Listado de productos |
+| `/productos` | `GET` | Catálogo completo |
+| `/productos?categoria=AUDIO` | `GET` | Catálogo filtrado por categoría |
 | `/productos/nuevo` | `GET` | Formulario de creacion |
 | `/productos` | `POST` | Crea el producto |
 | `/productos/{id}/editar` | `GET` | Formulario con los datos cargados |
@@ -216,6 +224,22 @@ En Windows PowerShell basta con el script incluido, que lee el `.env`:
 Neon suspende el cómputo por inactividad en la capa gratuita: la primera conexión despierta la
 base y puede tardar unos segundos.
 
+## Catálogo de demostración
+
+Al arrancar, si la tabla está vacía, la aplicación siembra 18 productos repartidos en las ocho
+categorías. Sirve para que quien clone el repositorio vea la aplicación con contenido sin tener
+que crear nada a mano.
+
+Los datos entran por el mismo puerto que usan la API y la interfaz web, así que pasan por las
+mismas reglas de negocio que cualquier otro alta.
+
+| Perfil | Siembra |
+|---|---|
+| `local` | sí, siempre (H2 arranca vacío en cada ejecución) |
+| `neon` y cualquier otro | no, salvo que se pida con `APP_DATOS_DEMO=true` |
+
+Nunca duplica: si ya hay productos, no hace nada.
+
 ## Pruebas
 
 ### Automatizadas
@@ -224,17 +248,17 @@ base y puede tardar unos segundos.
 ./gradlew test
 ```
 
-32 pruebas repartidas segun la arquitectura:
+42 pruebas repartidas según la arquitectura:
 
 | Suite | Pruebas | Levanta Spring |
 |---|---|---|
-| `ProductoTest` (dominio) | 6 | no |
-| `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 8 | no |
-| `ProductoRestAdapterTest` (integracion REST, los 4 verbos y los errores) | 8 | si |
-| `ProductoWebAdapterTest` (integracion web, formularios y _method) | 9 | si |
-| `ProductosApplicationTests` (carga de contexto) | 1 | si |
+| `ProductoTest` (dominio, invariantes y categorías) | 9 | no |
+| `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 9 | no |
+| `ProductoRestAdapterTest` (integración REST, los 4 verbos, filtros y errores) | 12 | sí |
+| `ProductoWebAdapterTest` (integración web, formularios, filtros y _method) | 11 | sí |
+| `ProductosApplicationTests` (carga de contexto) | 1 | sí |
 
-Las 14 pruebas del nucleo corren sin contenedor de dependencias ni base de datos. Eso es lo que
+Las 18 pruebas del núcleo corren sin contenedor de dependencias ni base de datos. Eso es lo que
 compra la arquitectura hexagonal.
 
 ### Manuales con Postman
@@ -250,13 +274,15 @@ de estado y de cuerpo de respuesta.
 API=http://localhost:8080/api/v1/productos
 
 curl -i -X POST $API -H "Content-Type: application/json" \
-  -d '{"nombre":"Teclado mecanico 60%","descripcion":"Switches lineales","precio":289900.00}'
+  -d '{"nombre":"Teclado mecanico 60%","descripcion":"Switches lineales","precio":289900.00,"categoria":"PERIFERICOS"}'
 
 curl $API
+curl "$API?categoria=AUDIO"
+curl $API/categorias
 curl $API/1
 
 curl -X PUT $API/1 -H "Content-Type: application/json" \
-  -d '{"nombre":"Teclado mecanico 65%","descripcion":"Layout compacto","precio":329900.00}'
+  -d '{"nombre":"Teclado mecanico 65%","descripcion":"Layout compacto","precio":329900.00,"categoria":"PERIFERICOS"}'
 
 curl -i -X DELETE $API/1
 ```

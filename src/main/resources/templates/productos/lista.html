@@ -8,11 +8,11 @@
 <section class="portada">
 	<div class="contenedor">
 		<div class="portada__texto">
-			<p class="portada__etiqueta">Catalogo</p>
-			<h2>Productos</h2>
+			<p class="portada__etiqueta" th:text="${filtro} != null ? 'Categoria' : 'Catalogo'">Catalogo</p>
+			<h2 th:text="${filtro} != null ? ${filtro.etiqueta} : 'Productos'">Productos</h2>
 			<p class="portada__conteo"
-			   th:text="${#lists.size(productos)} + (${#lists.size(productos)} == 1 ? ' producto registrado' : ' productos registrados')">
-				0 productos registrados
+			   th:text="${#lists.size(productos)} + (${#lists.size(productos)} == 1 ? ' producto' : ' productos')">
+				0 productos
 			</p>
 		</div>
 		<a class="boton" th:href="@{/productos/nuevo}">Nuevo producto</a>
@@ -25,9 +25,23 @@
 		<span aria-hidden="true">&#10003;</span><span th:text="${mensaje}"></span>
 	</p>
 
+	<nav class="filtros" aria-label="Filtrar por categoria">
+		<a class="chip" th:href="@{/productos}"
+		   th:classappend="${filtro} == null ? 'chip--activo'"
+		   th:attr="aria-current=${filtro} == null ? 'true' : null">Todas</a>
+		<a class="chip" th:each="c : ${categorias}"
+		   th:href="@{/productos(categoria=${c.name()})}"
+		   th:classappend="${c == filtro} ? 'chip--activo'"
+		   th:attr="aria-current=${c == filtro} ? 'true' : null"
+		   th:text="${c.etiqueta}">Categoria</a>
+	</nav>
+
 	<div class="vacio" th:if="${#lists.isEmpty(productos)}">
-		<strong>Todavia no hay productos</strong>
-		Crea el primero y aparecera aqui, y tambien en la API REST.
+		<strong th:if="${filtro} == null">Todavia no hay productos</strong>
+		<strong th:unless="${filtro} == null"
+		        th:text="'Nada en ' + ${filtro.etiqueta}">Nada en esta categoria</strong>
+		<span th:if="${filtro} == null">Crea el primero y aparecera aqui, y tambien en la API REST.</span>
+		<span th:unless="${filtro} == null">Prueba con otra categoria o crea un producto en esta.</span>
 	</div>
 
 	<ul class="fichas" th:unless="${#lists.isEmpty(productos)}">
@@ -35,7 +49,11 @@
 			<div class="ficha__portada" aria-hidden="true"
 			     th:style="'--giro:' + ${(producto.id % 5) * 18 - 36}"
 			     th:text="${#strings.toUpperCase(#strings.substring(producto.nombre, 0, 1))}">P</div>
-			<span class="ficha__identificador" th:text="'ID ' + ${producto.id}">ID 1</span>
+			<div class="ficha__meta">
+				<span class="ficha__identificador" th:text="'ID ' + ${producto.id}">ID 1</span>
+				<a class="etiqueta" th:href="@{/productos(categoria=${producto.categoria.name()})}"
+				   th:text="${producto.categoria.etiqueta}">Categoria</a>
+			</div>
 			<h3 class="ficha__nombre" th:text="${producto.nombre}">Nombre del producto</h3>
 			<p class="ficha__descripcion"
 			   th:text="${producto.descripcion} ?: 'Sin descripcion'">Descripcion</p>

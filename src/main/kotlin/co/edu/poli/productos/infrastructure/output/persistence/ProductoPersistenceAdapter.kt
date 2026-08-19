@@ -1,6 +1,7 @@
 package co.edu.poli.productos.infrastructure.output.persistence
 
 import co.edu.poli.productos.application.port.output.ProductoRepositoryPort
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import co.edu.poli.productos.infrastructure.output.persistence.mapper.ProductoPersistenceMapper
 import co.edu.poli.productos.infrastructure.output.persistence.repository.ProductoJpaRepository
@@ -19,6 +20,9 @@ class ProductoPersistenceAdapter(
 
 	override fun listarOrdenadosPorId(): List<Producto> =
 		repositorio.findAll(Sort.by(Sort.Direction.ASC, "id")).map(ProductoPersistenceMapper::aDominio)
+
+	override fun listarPorCategoria(categoria: Categoria): List<Producto> =
+		repositorio.findByCategoriaOrderByIdAsc(categoria).map(ProductoPersistenceMapper::aDominio)
 
 	override fun buscarPorId(id: Long): Producto? =
 		repositorio.findById(id).map(ProductoPersistenceMapper::aDominio).orElse(null)

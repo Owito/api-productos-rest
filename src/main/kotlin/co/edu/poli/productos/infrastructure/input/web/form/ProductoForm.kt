@@ -1,5 +1,6 @@
 package co.edu.poli.productos.infrastructure.input.web.form
 
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import jakarta.validation.constraints.DecimalMin
 import jakarta.validation.constraints.Digits
@@ -30,6 +31,9 @@ class ProductoForm(
 	@field:DecimalMin(value = "0.0", inclusive = false, message = "El precio debe ser mayor que cero")
 	@field:Digits(integer = 10, fraction = 2, message = "El precio admite maximo 10 enteros y 2 decimales")
 	var precio: BigDecimal? = null,
+
+	@field:NotBlank(message = "La categoria es obligatoria")
+	var categoria: String? = null,
 ) {
 
 	fun aDominio(): Producto = Producto(
@@ -37,6 +41,7 @@ class ProductoForm(
 		nombre = nombre.orEmpty().trim(),
 		descripcion = descripcion?.trim()?.ifBlank { null },
 		precio = precio ?: BigDecimal.ZERO,
+		categoria = Categoria.desde(categoria),
 	)
 
 	companion object {
@@ -45,6 +50,7 @@ class ProductoForm(
 			nombre = producto.nombre,
 			descripcion = producto.descripcion,
 			precio = producto.precio,
+			categoria = producto.categoria.name,
 		)
 	}
 }

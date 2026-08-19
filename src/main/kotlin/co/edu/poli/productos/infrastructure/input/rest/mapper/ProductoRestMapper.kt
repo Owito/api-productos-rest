@@ -1,5 +1,6 @@
 package co.edu.poli.productos.infrastructure.input.rest.mapper
 
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import co.edu.poli.productos.infrastructure.input.rest.dto.ProductoRequest
 import co.edu.poli.productos.infrastructure.input.rest.dto.ProductoResponse
@@ -11,6 +12,7 @@ object ProductoRestMapper {
 		nombre = request.nombre.orEmpty().trim(),
 		descripcion = request.descripcion?.trim(),
 		precio = request.precio ?: java.math.BigDecimal.ZERO,
+		categoria = Categoria.desde(request.categoria),
 	)
 
 	fun aRespuesta(producto: Producto): ProductoResponse = ProductoResponse(
@@ -18,5 +20,7 @@ object ProductoRestMapper {
 		nombre = producto.nombre,
 		descripcion = producto.descripcion,
 		precio = producto.precio,
+		categoria = producto.categoria.name,
+		categoriaEtiqueta = producto.categoria.etiqueta,
 	)
 }

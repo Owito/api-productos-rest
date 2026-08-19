@@ -32,4 +32,11 @@ data class ProductoRequest(
 	@field:Digits(integer = 10, fraction = 2, message = "El precio admite maximo 10 enteros y 2 decimales")
 	@Schema(example = "289900.00")
 	val precio: BigDecimal?,
+
+	@field:NotBlank(message = "La categoria es obligatoria")
+	@Schema(
+		example = "PERIFERICOS",
+		description = "AUDIO, PERIFERICOS, PANTALLAS, COMPUTO, ALMACENAMIENTO, CONECTIVIDAD, ENERGIA o MOBILIARIO",
+	)
+	val categoria: String?,
 )

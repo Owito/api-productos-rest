@@ -37,12 +37,14 @@ class ProductoRestAdapterTest {
 		repositorio.deleteAll()
 	}
 
-	private fun json(nombre: String, precio: String) =
-		mapper.writeValueAsString(ProductoRequest(nombre, "descripcion de prueba", BigDecimal(precio)))
+	private fun json(nombre: String, precio: String, categoria: String = "PERIFERICOS") =
+		mapper.writeValueAsString(
+			ProductoRequest(nombre, "descripcion de prueba", BigDecimal(precio), categoria),
+		)
 
-	private fun crearProducto(nombre: String, precio: String = "1000.00"): Long {
+	private fun crearProducto(nombre: String, precio: String = "1000.00", categoria: String = "PERIFERICOS"): Long {
 		val respuesta = mockMvc.perform(
-			post(ruta).contentType(MediaType.APPLICATION_JSON).content(json(nombre, precio)),
+			post(ruta).contentType(MediaType.APPLICATION_JSON).content(json(nombre, precio, categoria)),
 		).andExpect(status().isCreated).andReturn().response.contentAsString
 		return mapper.readTree(respuesta).get("id").asLong()
 	}
@@ -53,6 +55,48 @@ class ProductoRestAdapterTest {
 			.andExpect(status().isCreated)
 			.andExpect(jsonPath("$.id").isNumber)
 			.andExpect(jsonPath("$.nombre").value("Teclado 60"))
+			.andExpect(jsonPath("$.categoria").value("PERIFERICOS"))
+			.andExpect(jsonPath("$.categoriaEtiqueta").value("Perifericos"))
+	}
+
+	@Test
+	fun `GET con categoria filtra el listado`() {
+		crearProducto("Audifonos", categoria = "AUDIO")
+		crearProducto("Teclado", categoria = "PERIFERICOS")
+		crearProducto("Parlante", categoria = "AUDIO")
+
+		mockMvc.perform(get(ruta)).andExpect(jsonPath("$.length()").value(3))
+		mockMvc.perform(get("$ruta?categoria=AUDIO"))
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.length()").value(2))
+		mockMvc.perform(get("$ruta?categoria=mobiliario"))
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.length()").value(0))
+	}
+
+	@Test
+	fun `GET con una categoria inexistente responde 400`() {
+		mockMvc.perform(get("$ruta?categoria=INVENTADA"))
+			.andExpect(status().isBadRequest)
+			.andExpect(jsonPath("$.estado").value(400))
+	}
+
+	@Test
+	fun `GET categorias devuelve el catalogo completo`() {
+		mockMvc.perform(get("$ruta/categorias"))
+			.andExpect(status().isOk)
+			.andExpect(jsonPath("$.length()").value(8))
+			.andExpect(jsonPath("$[0].codigo").value("AUDIO"))
+			.andExpect(jsonPath("$[0].etiqueta").value("Audio"))
+	}
+
+	@Test
+	fun `POST sin categoria responde 400`() {
+		val cuerpo = """{"nombre":"Sin categoria","precio":1000}"""
+
+		mockMvc.perform(post(ruta).contentType(MediaType.APPLICATION_JSON).content(cuerpo))
+			.andExpect(status().isBadRequest)
+			.andExpect(jsonPath("$.detalles[0].campo").value("categoria"))
 	}
 
 	@Test
@@ -92,7 +136,7 @@ class ProductoRestAdapterTest {
 
 	@Test
 	fun `un cuerpo invalido responde 400 con el detalle por campo`() {
-		val cuerpo = """{"nombre":"","descripcion":"sin precio valido","precio":-5}"""
+		val cuerpo = """{"nombre":"","descripcion":"sin precio valido","precio":-5,"categoria":"AUDIO"}"""
 
 		mockMvc.perform(post(ruta).contentType(MediaType.APPLICATION_JSON).content(cuerpo))
 			.andExpect(status().isBadRequest)

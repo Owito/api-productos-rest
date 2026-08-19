@@ -46,6 +46,17 @@
 			<span class="error-campo" th:if="${#fields.hasErrors('descripcion')}" th:errors="*{descripcion}"></span>
 		</div>
 
+		<div class="campo" th:classappend="${#fields.hasErrors('categoria')} ? 'campo--invalido'">
+			<label for="categoria">Categoria</label>
+			<select id="categoria" th:field="*{categoria}" aria-describedby="ayuda-categoria"
+			        th:aria-invalid="${#fields.hasErrors('categoria')} ? 'true' : 'false'">
+				<option value="">Selecciona una categoria</option>
+				<option th:each="c : ${categorias}" th:value="${c.name()}" th:text="${c.etiqueta}">Categoria</option>
+			</select>
+			<span class="ayuda" id="ayuda-categoria">Clasifica el producto dentro del catalogo.</span>
+			<span class="error-campo" th:if="${#fields.hasErrors('categoria')}" th:errors="*{categoria}"></span>
+		</div>
+
 		<div class="campo" th:classappend="${#fields.hasErrors('precio')} ? 'campo--invalido'">
 			<label for="precio">Precio</label>
 			<input type="number" id="precio" th:field="*{precio}" step="0.01" min="0.01"

@@ -40,8 +40,12 @@ logging:
   level:
     co.edu.poli.productos: INFO
 
-# Datos academicos mostrados en /creditos.
 app:
+  # Siembra un catalogo de ejemplo si la tabla esta vacia. Apagado por defecto;
+  # el perfil local lo enciende y en la nube se pide con APP_DATOS_DEMO=true.
+  datos-demo: ${APP_DATOS_DEMO:false}
+
+  # Datos academicos mostrados en /creditos.
   creditos:
     integrantes:
       - Carlos Guerra

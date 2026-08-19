@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
-<head th:replace="~{fragmentos/comunes :: cabeza('Producto no encontrado')}"></head>
+<head th:replace="~{fragmentos/comunes :: cabeza(${titulo} ?: 'Error')}"></head>
 <body>
 
 <header th:replace="~{fragmentos/comunes :: encabezado('productos')}"></header>
@@ -8,8 +8,8 @@
 <section class="portada">
 	<div class="contenedor">
 		<div class="portada__texto">
-			<p class="portada__etiqueta">Error 404</p>
-			<h2>No encontrado</h2>
+			<p class="portada__etiqueta" th:text="${codigo} ?: 'Error'">Error</p>
+			<h2 th:text="${titulo} ?: 'Algo no salio bien'">Algo no salio bien</h2>
 		</div>
 		<a class="boton" th:href="@{/productos}">Volver al catalogo</a>
 	</div>

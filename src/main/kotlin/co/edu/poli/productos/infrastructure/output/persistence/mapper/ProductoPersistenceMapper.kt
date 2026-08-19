@@ -11,6 +11,7 @@ object ProductoPersistenceMapper {
 		nombre = entidad.nombre,
 		descripcion = entidad.descripcion,
 		precio = entidad.precio,
+		categoria = entidad.categoria,
 	)
 
 	fun aEntidad(producto: Producto): ProductoJpaEntity = ProductoJpaEntity(
@@ -18,5 +19,6 @@ object ProductoPersistenceMapper {
 		nombre = producto.nombre,
 		descripcion = producto.descripcion,
 		precio = producto.precio,
+		categoria = producto.categoria,
 	)
 }

@@ -10,4 +10,6 @@ data class ProductoResponse(
 	@Schema(example = "Teclado mecanico 60%") val nombre: String,
 	@Schema(example = "Teclado mecanico inalambrico, switches lineales, layout ANSI") val descripcion: String?,
 	@Schema(example = "289900.00") val precio: BigDecimal,
+	@Schema(example = "PERIFERICOS") val categoria: String,
+	@Schema(example = "Perifericos", description = "Nombre legible de la categoria") val categoriaEtiqueta: String,
 )

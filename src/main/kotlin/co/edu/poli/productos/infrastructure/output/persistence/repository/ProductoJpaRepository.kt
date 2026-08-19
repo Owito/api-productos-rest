@@ -1,5 +1,6 @@
 package co.edu.poli.productos.infrastructure.output.persistence.repository
 
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.infrastructure.output.persistence.entity.ProductoJpaEntity
 import org.springframework.data.jpa.repository.JpaRepository
 
@@ -10,4 +11,6 @@ import org.springframework.data.jpa.repository.JpaRepository
 interface ProductoJpaRepository : JpaRepository<ProductoJpaEntity, Long> {
 
 	fun existsByNombreIgnoreCase(nombre: String): Boolean
+
+	fun findByCategoriaOrderByIdAsc(categoria: Categoria): List<ProductoJpaEntity>
 }

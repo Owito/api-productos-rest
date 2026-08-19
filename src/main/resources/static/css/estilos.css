@@ -331,6 +331,39 @@ a { color: var(--texto); }
 	border-left-color: var(--peligro);
 }
 
+/* ---------- Filtros por categoria ---------- */
+
+.filtros {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.5rem;
+	margin-bottom: 1.75rem;
+}
+
+.chip {
+	display: inline-block;
+	padding: 0.4rem 0.95rem;
+	border-radius: var(--pildora);
+	background: var(--superficie-alta);
+	border: 1px solid var(--borde);
+	color: var(--texto-suave);
+	font-size: 0.84rem;
+	font-weight: 600;
+	text-decoration: none;
+	white-space: nowrap;
+	transition: color var(--transicion), background var(--transicion), border-color var(--transicion);
+}
+
+.chip:hover { color: var(--texto); border-color: var(--texto-tenue); }
+
+.chip--activo {
+	background: var(--acento);
+	border-color: var(--acento);
+	color: var(--sobre-acento);
+}
+
+.chip--activo:hover { color: var(--sobre-acento); border-color: var(--acento); }
+
 /* ---------- Rejilla de fichas ---------- */
 
 .fichas {
@@ -375,6 +408,29 @@ a { color: var(--texto); }
 	   plano de un solo color. El giro se queda dentro de la familia del acento. */
 	filter: hue-rotate(calc(var(--giro, 0) * 1deg));
 }
+
+.ficha__meta {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.35rem 0.6rem;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.etiqueta {
+	font-size: 0.68rem;
+	font-weight: 700;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: var(--acento);
+	text-decoration: none;
+	border: 1px solid var(--acento);
+	border-radius: var(--pildora);
+	padding: 0.1rem 0.55rem;
+	white-space: nowrap;
+}
+
+.etiqueta:hover { background: var(--acento); color: var(--sobre-acento); }
 
 .ficha__identificador {
 	font-size: 0.68rem;
@@ -465,7 +521,8 @@ a { color: var(--texto); }
 .campo .ayuda { font-size: 0.82rem; color: var(--texto-tenue); }
 
 .campo input,
-.campo textarea {
+.campo textarea,
+.campo select {
 	font: inherit;
 	width: 100%;
 	padding: 0.72rem 0.9rem;
@@ -477,12 +534,14 @@ a { color: var(--texto); }
 }
 
 .campo input:focus,
-.campo textarea:focus { border-color: var(--texto); }
+.campo textarea:focus,
+.campo select:focus { border-color: var(--texto); }
 
 .campo textarea { min-height: 6rem; resize: vertical; }
 
 .campo--invalido input,
-.campo--invalido textarea { border-color: var(--peligro); }
+.campo--invalido textarea,
+.campo--invalido select { border-color: var(--peligro); }
 
 .error-campo {
 	color: var(--peligro);

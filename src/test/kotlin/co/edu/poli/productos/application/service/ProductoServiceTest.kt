@@ -3,6 +3,7 @@ package co.edu.poli.productos.application.service
 import co.edu.poli.productos.application.port.output.ProductoRepositoryPort
 import co.edu.poli.productos.domain.exception.NombreDeProductoDuplicadoException
 import co.edu.poli.productos.domain.exception.ProductoNoEncontradoException
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -22,6 +23,9 @@ private class RepositorioEnMemoria : ProductoRepositoryPort {
 	private var secuencia = 0L
 
 	override fun listarOrdenadosPorId(): List<Producto> = datos.values.sortedBy { it.id }
+
+	override fun listarPorCategoria(categoria: Categoria): List<Producto> =
+		listarOrdenadosPorId().filter { it.categoria == categoria }
 
 	override fun buscarPorId(id: Long): Producto? = datos[id]
 
@@ -57,8 +61,16 @@ class ProductoServiceTest {
 		servicio = ProductoService(repositorio)
 	}
 
-	private fun producto(nombre: String, precio: String = "1000.00") =
-		Producto(nombre = nombre, descripcion = "descripcion de prueba", precio = BigDecimal(precio))
+	private fun producto(
+		nombre: String,
+		precio: String = "1000.00",
+		categoria: Categoria = Categoria.PERIFERICOS,
+	) = Producto(
+		nombre = nombre,
+		descripcion = "descripcion de prueba",
+		precio = BigDecimal(precio),
+		categoria = categoria,
+	)
 
 	@Test
 	fun `crear persiste el producto y le asigna identificador`() {
@@ -84,6 +96,17 @@ class ProductoServiceTest {
 		servicio.crear(producto("Segundo"))
 
 		assertEquals(listOf("Primero", "Segundo"), servicio.listar().map { it.nombre })
+	}
+
+	@Test
+	fun `listar filtra por categoria cuando se indica`() {
+		servicio.crear(producto("Audifonos", categoria = Categoria.AUDIO))
+		servicio.crear(producto("Teclado", categoria = Categoria.PERIFERICOS))
+		servicio.crear(producto("Parlante", categoria = Categoria.AUDIO))
+
+		assertEquals(3, servicio.listar().size)
+		assertEquals(listOf("Audifonos", "Parlante"), servicio.listar(Categoria.AUDIO).map { it.nombre })
+		assertEquals(emptyList<String>(), servicio.listar(Categoria.MOBILIARIO).map { it.nombre })
 	}
 
 	@Test

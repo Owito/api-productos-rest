@@ -1,6 +1,8 @@
 package co.edu.poli.productos.domain
 
 import co.edu.poli.productos.domain.exception.DatosDeProductoInvalidosException
+import co.edu.poli.productos.domain.exception.DatosDeProductoInvalidosException as ExcepcionDatos
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import org.junit.jupiter.api.Assertions.assertEquals
 import org.junit.jupiter.api.Assertions.assertThrows
@@ -14,8 +16,16 @@ import java.math.BigDecimal
  */
 class ProductoTest {
 
-	private fun producto(nombre: String = "Teclado", precio: String = "1000.00") =
-		Producto(nombre = nombre, descripcion = "descripcion", precio = BigDecimal(precio))
+	private fun producto(
+		nombre: String = "Teclado",
+		precio: String = "1000.00",
+		categoria: Categoria = Categoria.PERIFERICOS,
+	) = Producto(
+		nombre = nombre,
+		descripcion = "descripcion",
+		precio = BigDecimal(precio),
+		categoria = categoria,
+	)
 
 	@Test
 	fun `un producto valido se construye sin problema`() {
@@ -54,6 +64,29 @@ class ProductoTest {
 		assertEquals(7L, actualizado.id)
 		assertEquals("Mouse", actualizado.nombre)
 		assertEquals(0, BigDecimal("2000.00").compareTo(actualizado.precio))
+	}
+
+	@Test
+	fun `actualizar tambien cambia la categoria`() {
+		val original = producto(categoria = Categoria.PERIFERICOS).copy(id = 3L)
+
+		val actualizado = original.actualizadoCon(producto(categoria = Categoria.AUDIO))
+
+		assertEquals(Categoria.AUDIO, actualizado.categoria)
+		assertEquals(3L, actualizado.id)
+	}
+
+	@Test
+	fun `una categoria desconocida se rechaza en el dominio`() {
+		assertThrows(ExcepcionDatos::class.java) { Categoria.desde("INVENTADA") }
+		assertThrows(ExcepcionDatos::class.java) { Categoria.desde("  ") }
+		assertThrows(ExcepcionDatos::class.java) { Categoria.desde(null) }
+	}
+
+	@Test
+	fun `la categoria se resuelve sin importar mayusculas ni espacios`() {
+		assertEquals(Categoria.AUDIO, Categoria.desde("  audio  "))
+		assertEquals(Categoria.MOBILIARIO, Categoria.desde("Mobiliario"))
 	}
 
 	@Test

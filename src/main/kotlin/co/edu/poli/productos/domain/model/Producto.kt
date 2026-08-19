@@ -15,6 +15,7 @@ data class Producto(
 	val nombre: String,
 	val descripcion: String? = null,
 	val precio: BigDecimal,
+	val categoria: Categoria,
 ) {
 
 	init {
@@ -41,6 +42,7 @@ data class Producto(
 		nombre = nuevos.nombre,
 		descripcion = nuevos.descripcion,
 		precio = nuevos.precio,
+		categoria = nuevos.categoria,
 	)
 
 	/** Dos productos no pueden llamarse igual, sin importar mayusculas. */

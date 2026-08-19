@@ -2,6 +2,7 @@ package co.edu.poli.productos.infrastructure.input.web
 
 import co.edu.poli.productos.application.port.input.GestionarProductosUseCase
 import co.edu.poli.productos.domain.exception.DatosDeProductoInvalidosException
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.exception.NombreDeProductoDuplicadoException
 import co.edu.poli.productos.infrastructure.input.web.form.ProductoForm
 import jakarta.validation.Valid
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestMapping
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.servlet.mvc.support.RedirectAttributes
 
 /**
@@ -35,9 +37,15 @@ class ProductoWebAdapter(
 	private val casoDeUso: GestionarProductosUseCase,
 ) {
 
+	/** Todas las vistas ofrecen el catalogo de categorias para pintar filtros y selectores. */
+	@ModelAttribute("categorias")
+	fun categorias(): List<Categoria> = Categoria.entries
+
 	@GetMapping
-	fun listar(model: Model): String {
-		model.addAttribute("productos", casoDeUso.listar())
+	fun listar(@RequestParam(required = false) categoria: String?, model: Model): String {
+		val filtro = categoria?.takeIf { it.isNotBlank() }?.let(Categoria::desde)
+		model.addAttribute("productos", casoDeUso.listar(filtro))
+		model.addAttribute("filtro", filtro)
 		return "productos/lista"
 	}
 

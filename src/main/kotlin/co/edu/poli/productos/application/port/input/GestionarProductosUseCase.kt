@@ -1,5 +1,6 @@
 package co.edu.poli.productos.application.port.input
 
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 
 /**
@@ -10,7 +11,8 @@ import co.edu.poli.productos.domain.model.Producto
  */
 interface GestionarProductosUseCase {
 
-	fun listar(): List<Producto>
+	/** Lista el catalogo completo, o solo una categoria si se indica. */
+	fun listar(categoria: Categoria? = null): List<Producto>
 
 	fun obtener(id: Long): Producto
 

@@ -1,11 +1,14 @@
 package co.edu.poli.productos.infrastructure.input.rest
 
 import co.edu.poli.productos.application.port.input.GestionarProductosUseCase
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.infrastructure.input.rest.dto.ProductoRequest
 import co.edu.poli.productos.infrastructure.input.rest.dto.ProductoResponse
 import co.edu.poli.productos.infrastructure.input.rest.error.ApiError
 import co.edu.poli.productos.infrastructure.input.rest.mapper.ProductoRestMapper
+import co.edu.poli.productos.infrastructure.input.rest.dto.CategoriaResponse
 import io.swagger.v3.oas.annotations.Operation
+import io.swagger.v3.oas.annotations.Parameter
 import io.swagger.v3.oas.annotations.media.Content
 import io.swagger.v3.oas.annotations.media.Schema
 import io.swagger.v3.oas.annotations.responses.ApiResponse
@@ -20,6 +23,7 @@ import org.springframework.web.bind.annotation.PathVariable
 import org.springframework.web.bind.annotation.PostMapping
 import org.springframework.web.bind.annotation.PutMapping
 import org.springframework.web.bind.annotation.RequestBody
+import org.springframework.web.bind.annotation.RequestParam
 import org.springframework.web.bind.annotation.RequestMapping
 import org.springframework.web.bind.annotation.ResponseStatus
 import org.springframework.web.bind.annotation.RestController
@@ -40,9 +44,30 @@ class ProductoRestAdapter(
 ) {
 
 	@GetMapping
-	@Operation(summary = "Lista todos los productos")
-	@ApiResponse(responseCode = "200", description = "Listado obtenido")
-	fun listar(): List<ProductoResponse> = casoDeUso.listar().map(ProductoRestMapper::aRespuesta)
+	@Operation(
+		summary = "Lista los productos",
+		description = "Sin parametros devuelve el catalogo completo. Con 'categoria' filtra por una sola.",
+	)
+	@ApiResponses(
+		ApiResponse(responseCode = "200", description = "Listado obtenido"),
+		ApiResponse(
+			responseCode = "400", description = "La categoria indicada no existe",
+			content = [Content(schema = Schema(implementation = ApiError::class))],
+		),
+	)
+	fun listar(
+		@RequestParam(required = false)
+		@Parameter(description = "Filtra por categoria", example = "PERIFERICOS")
+		categoria: String?,
+	): List<ProductoResponse> =
+		casoDeUso.listar(categoria?.takeIf { it.isNotBlank() }?.let(Categoria::desde))
+			.map(ProductoRestMapper::aRespuesta)
+
+	@GetMapping("/categorias")
+	@Operation(summary = "Lista las categorias disponibles")
+	@ApiResponse(responseCode = "200", description = "Catalogo de categorias")
+	fun categorias(): List<CategoriaResponse> =
+		Categoria.entries.map { CategoriaResponse(it.name, it.etiqueta) }
 
 	@GetMapping("/{id}")
 	@Operation(summary = "Consulta un producto por su identificador")

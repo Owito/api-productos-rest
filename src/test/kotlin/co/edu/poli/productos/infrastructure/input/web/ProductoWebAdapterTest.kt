@@ -34,12 +34,13 @@ class ProductoWebAdapterTest {
 		repositorio.deleteAll()
 	}
 
-	private fun crear(nombre: String, precio: String = "1000.00") =
+	private fun crear(nombre: String, precio: String = "1000.00", categoria: String = "PERIFERICOS") =
 		mockMvc.perform(
 			post("/productos")
 				.param("nombre", nombre)
 				.param("descripcion", "descripcion de prueba")
-				.param("precio", precio),
+				.param("precio", precio)
+				.param("categoria", categoria),
 		)
 
 	@Test
@@ -70,17 +71,20 @@ class ProductoWebAdapterTest {
 
 	@Test
 	fun `un formulario invalido se repinta con el error y no redirige`() {
-		mockMvc.perform(post("/productos").param("nombre", "").param("precio", "-5"))
+		mockMvc.perform(post("/productos").param("nombre", "").param("precio", "-5").param("categoria", ""))
 			.andExpect(status().isOk)
 			.andExpect(view().name("productos/formulario"))
-			.andExpect(model().attributeHasFieldErrors("producto", "nombre", "precio"))
+			.andExpect(model().attributeHasFieldErrors("producto", "nombre", "precio", "categoria"))
 	}
 
 	@Test
 	fun `un nombre duplicado se muestra como error del campo, no como pagina de error`() {
 		crear("Mouse vertical")
 
-		mockMvc.perform(post("/productos").param("nombre", "MOUSE VERTICAL").param("precio", "100.00"))
+		mockMvc.perform(
+			post("/productos").param("nombre", "MOUSE VERTICAL").param("precio", "100.00")
+				.param("categoria", "PERIFERICOS"),
+		)
 			.andExpect(status().isOk)
 			.andExpect(view().name("productos/formulario"))
 			.andExpect(model().attributeHasFieldErrors("producto", "nombre"))
@@ -107,7 +111,8 @@ class ProductoWebAdapterTest {
 				.param("_method", "put")
 				.param("id", id.toString())
 				.param("nombre", "Hub USB C de 7 puertos")
-				.param("precio", "180000.00"),
+				.param("precio", "180000.00")
+				.param("categoria", "CONECTIVIDAD"),
 		)
 			.andExpect(status().is3xxRedirection)
 			.andExpect(redirectedUrl("/productos"))
@@ -127,6 +132,24 @@ class ProductoWebAdapterTest {
 
 		mockMvc.perform(get("/productos"))
 			.andExpect(content().string(org.hamcrest.Matchers.containsString("Todavia no hay productos")))
+	}
+
+	@Test
+	fun `el listado filtra por categoria desde la URL`() {
+		crear("Audifonos over-ear", categoria = "AUDIO")
+		crear("Teclado mecanico", categoria = "PERIFERICOS")
+
+		mockMvc.perform(get("/productos?categoria=AUDIO"))
+			.andExpect(status().isOk)
+			.andExpect(content().string(org.hamcrest.Matchers.containsString("Audifonos over-ear")))
+			.andExpect(content().string(org.hamcrest.Matchers.not(org.hamcrest.Matchers.containsString("Teclado mecanico"))))
+	}
+
+	@Test
+	fun `una categoria inexistente en la URL muestra una pagina HTML de error`() {
+		mockMvc.perform(get("/productos?categoria=INVENTADA"))
+			.andExpect(status().isBadRequest)
+			.andExpect(view().name("error/no-encontrado"))
 	}
 
 	@Test

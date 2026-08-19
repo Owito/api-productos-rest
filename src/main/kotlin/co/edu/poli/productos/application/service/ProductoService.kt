@@ -4,6 +4,7 @@ import co.edu.poli.productos.application.port.input.GestionarProductosUseCase
 import co.edu.poli.productos.application.port.output.ProductoRepositoryPort
 import co.edu.poli.productos.domain.exception.NombreDeProductoDuplicadoException
 import co.edu.poli.productos.domain.exception.ProductoNoEncontradoException
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 import jakarta.transaction.Transactional
 
@@ -20,7 +21,8 @@ class ProductoService(
 	private val repositorio: ProductoRepositoryPort,
 ) : GestionarProductosUseCase {
 
-	override fun listar(): List<Producto> = repositorio.listarOrdenadosPorId()
+	override fun listar(categoria: Categoria?): List<Producto> =
+		if (categoria == null) repositorio.listarOrdenadosPorId() else repositorio.listarPorCategoria(categoria)
 
 	override fun obtener(id: Long): Producto = buscarOFallar(id)
 

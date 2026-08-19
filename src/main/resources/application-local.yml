@@ -14,3 +14,9 @@ spring:
       path: /h2-console
   thymeleaf:
     cache: false
+
+# Con H2 en memoria la base arranca vacia en cada ejecucion, asi que el catalogo
+# de ejemplo se siembra siempre. Quien clone el repositorio ve la aplicacion con
+# contenido sin configurar nada.
+app:
+  datos-demo: true

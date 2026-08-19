@@ -1,5 +1,6 @@
 package co.edu.poli.productos.application.port.output
 
+import co.edu.poli.productos.domain.model.Categoria
 import co.edu.poli.productos.domain.model.Producto
 
 /**
@@ -14,6 +15,8 @@ import co.edu.poli.productos.domain.model.Producto
 interface ProductoRepositoryPort {
 
 	fun listarOrdenadosPorId(): List<Producto>
+
+	fun listarPorCategoria(categoria: Categoria): List<Producto>
 
 	fun buscarPorId(id: Long): Producto?
 
