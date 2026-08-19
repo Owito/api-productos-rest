@@ -14,7 +14,17 @@ services:
     region: ohio
     branch: main
     dockerfilePath: ./Dockerfile
-    healthCheckPath: /actuator/health
+    # Liveness y no /actuator/health a secas. El health compuesto incluye el
+    # indicador de la base de datos, que lanza una consulta de validacion; si la
+    # computacion de Neon esta suspendida esa consulta se queda esperando
+    # mientras la base despierta, la sonda no responde a tiempo y Render da el
+    # despliegue por fallido aunque la aplicacion este perfectamente viva.
+    #
+    # Un chequeo de plataforma responde "este proceso esta vivo, no lo
+    # reinicies", no "la base de datos esta despierta". Para lo segundo esta
+    # /actuator/health, que sigue expuesto y es el que pinga el workflow de
+    # mantenimiento: asi ese ping mantiene caliente tambien a Neon.
+    healthCheckPath: /actuator/health/liveness
     # Solo surte efecto si el repositorio esta conectado por la aplicacion de
     # GitHub de Render. Conectado por URL publica, Render no puede instalar el
     # webhook y los despliegues se disparan a mano. Ver docs/DESPLIEGUE.md.

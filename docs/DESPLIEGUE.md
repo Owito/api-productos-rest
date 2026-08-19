@@ -83,6 +83,29 @@ catálogo sembrado con 18 productos, el filtro por categoría, el ciclo completo
 el manejo de errores devolviendo 400 con datos inválidos, 404 con un id inexistente y 409 con un
 nombre duplicado.
 
+## El chequeo de salud apunta a `liveness`, no a `/actuator/health`
+
+Vale la pena entender por qué, porque el primer redespliegue falló justamente por esto.
+
+`/actuator/health` es un chequeo **compuesto**: incluye el indicador de la base de datos, que
+lanza una consulta de validación. La capa gratuita de Neon **suspende la computación** cuando lleva
+un rato sin uso, y despertarla tarda varios segundos. Durante esa espera la sonda no responde, y
+Render concluye que el despliegue falló aunque la aplicación esté perfectamente viva.
+
+Fue exactamente lo que pasó el 19 de agosto: el log decía `Started ProductosApplicationKt in
+69.189 seconds` y aun así el despliegue terminó en `Timed Out`. La aplicación estaba arriba; lo que
+no contestaba a tiempo era el chequeo.
+
+La separación correcta es esta:
+
+| Sonda | Quién la usa | Qué responde |
+|---|---|---|
+| `/actuator/health/liveness` | Render y el `HEALTHCHECK` del contenedor | "El proceso está vivo, no lo reinicies" |
+| `/actuator/health` | El workflow de mantenimiento y las personas | "La aplicación y su base de datos responden" |
+
+El ping del cron sigue yendo al compuesto a propósito: así ese mismo tráfico mantiene despierta
+también la base de datos, no solo la instancia.
+
 ## Qué esperar
 
 - **La primera petición después de un periodo dormido tarda cerca de un minuto.** Es el arranque en

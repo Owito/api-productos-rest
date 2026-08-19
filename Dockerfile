@@ -46,7 +46,11 @@ ENV JAVA_OPTS="-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 
 
 EXPOSE 8080
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=60s --retries=3 \
-	CMD curl -fsS "http://127.0.0.1:${PORT}/actuator/health" || exit 1
+# Liveness y no el health compuesto: ese ultimo consulta la base de datos, y una
+# base gestionada que despierta de la suspension tarda lo suficiente como para
+# tumbar la sonda de un contenedor que en realidad esta sano. Margen amplio de
+# arranque porque la JVM en una instancia pequena tarda mas de un minuto.
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+	CMD curl -fsS "http://127.0.0.1:${PORT}/actuator/health/liveness" || exit 1
 
 ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar /app/aplicacion.jar"]
