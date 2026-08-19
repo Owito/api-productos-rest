@@ -15,6 +15,9 @@ services:
     branch: main
     dockerfilePath: ./Dockerfile
     healthCheckPath: /actuator/health
+    # Solo surte efecto si el repositorio esta conectado por la aplicacion de
+    # GitHub de Render. Conectado por URL publica, Render no puede instalar el
+    # webhook y los despliegues se disparan a mano. Ver docs/DESPLIEGUE.md.
     autoDeploy: true
 
     envVars:

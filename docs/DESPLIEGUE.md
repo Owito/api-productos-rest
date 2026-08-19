@@ -88,8 +88,17 @@ En el navegador: `/productos` (catálogo), `/creditos` y `/swagger-ui.html`.
 
 ## Actualizar
 
-`autoDeploy: true` deja el servicio enganchado a `main`: cada `git push` dispara una construcción y
-un despliegue. Para desplegar sin empujar código, **Manual Deploy** en el panel de Render.
+El servicio se creó conectando el **repositorio público por URL**, y no a través de la aplicación
+de GitHub de Render. Se eligió así para no ampliar los permisos que Render tiene sobre la cuenta de
+GitHub: su instalación solo alcanza cuatro repositorios y este no estaba entre ellos.
+
+El costo de esa decisión es que **el auto-despliegue no funciona**: aunque `render.yaml` declare
+`autoDeploy: true`, Render no puede instalar el webhook en un repositorio que no administra. Cada
+actualización se dispara con **Manual Deploy** en el panel.
+
+Para recuperar el auto-despliegue basta con agregar el repositorio a la instalación de Render en
+GitHub (**Configure account** en la pantalla de conexión) y volver a crear el servicio conectándolo
+desde la lista en vez de por URL.
 
 ## Costos
 
