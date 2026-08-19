@@ -1,6 +1,8 @@
 package co.edu.poli.productos
 
+import co.edu.poli.productos.infrastructure.config.CreditosProperties
 import org.springframework.boot.autoconfigure.SpringBootApplication
+import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.boot.runApplication
 
 /**
@@ -10,6 +12,7 @@ import org.springframework.boot.runApplication
  * Unidad 2 - Actividad sumativa: backend con servicios RESTful CRUD sobre base de datos.
  */
 @SpringBootApplication
+@EnableConfigurationProperties(CreditosProperties::class)
 class ProductosApplication
 
 fun main(args: Array<String>) {

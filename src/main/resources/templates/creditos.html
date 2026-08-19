@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head th:replace="~{fragmentos/comunes :: cabeza('Creditos')}"></head>
+<body>
+
+<header th:replace="~{fragmentos/comunes :: encabezado('creditos')}"></header>
+
+<section class="portada">
+	<div class="contenedor">
+		<div class="portada__texto">
+			<p class="portada__etiqueta">Trabajo academico</p>
+			<h2>Creditos</h2>
+			<p class="portada__conteo" th:text="${creditos.asignatura} + ' | ' + ${creditos.unidad}">
+				Asignatura y unidad
+			</p>
+		</div>
+		<a class="boton boton--secundario" th:href="@{/productos}">Volver al catalogo</a>
+	</div>
+</section>
+
+<main class="contenedor">
+
+	<dl class="creditos">
+		<div>
+			<dt th:text="${#lists.size(creditos.integrantes)} > 1 ? 'Integrantes' : 'Autor'">Integrantes</dt>
+			<dd>
+				<span th:each="integrante, i : ${creditos.integrantes}">
+					<span th:text="${integrante}">Nombre</span><br th:unless="${i.last}">
+				</span>
+			</dd>
+		</div>
+		<div>
+			<dt>Programa</dt>
+			<dd th:text="${creditos.programa}">Programa</dd>
+		</div>
+		<div>
+			<dt>Asignatura</dt>
+			<dd th:text="${creditos.asignatura} + ' (' + ${creditos.codigoAsignatura} + ')'">Asignatura</dd>
+		</div>
+		<div>
+			<dt>Actividad</dt>
+			<dd th:text="${creditos.unidad}">Unidad</dd>
+		</div>
+		<div>
+			<dt>Tutor</dt>
+			<dd th:text="${creditos.tutor}">Tutor</dd>
+		</div>
+		<div>
+			<dt>Institucion</dt>
+			<dd th:text="${creditos.institucion}">Institucion</dd>
+		</div>
+		<div>
+			<dt>Periodo</dt>
+			<dd th:text="${creditos.periodo}">Periodo</dd>
+		</div>
+		<div>
+			<dt>Fecha de entrega</dt>
+			<dd th:text="${creditos.fechaDeEntrega}">Fecha</dd>
+		</div>
+		<div>
+			<dt>Repositorio</dt>
+			<dd><a th:href="${creditos.repositorio}" th:text="${creditos.repositorio}" rel="noopener">Repositorio</a></dd>
+		</div>
+	</dl>
+
+	<p class="nota-creditos">
+		Backend con servicios RESTful CRUD sobre una entidad Producto, construido con Spring Boot y
+		Kotlin bajo arquitectura hexagonal, con ORM sobre PostgreSQL. El mismo nucleo se expone por
+		dos adaptadores de entrada: la API REST y esta interfaz web.
+	</p>
+
+	<p class="nota-creditos">
+		El sistema de diseno de esta interfaz toma los patrones visuales de las aplicaciones de
+		streaming musical (base oscura, verde de acento, controles en pildora, rejilla de tarjetas).
+		No emplea marcas, logotipos ni tipografias propietarias de terceros.
+	</p>
+
+</main>
+
+<footer th:replace="~{fragmentos/comunes :: pie}"></footer>
+
+</body>
+</html>

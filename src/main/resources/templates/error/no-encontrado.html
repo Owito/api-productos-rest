@@ -3,23 +3,27 @@
 <head th:replace="~{fragmentos/comunes :: cabeza('Producto no encontrado')}"></head>
 <body>
 
-<header th:replace="~{fragmentos/comunes :: encabezado}"></header>
+<header th:replace="~{fragmentos/comunes :: encabezado('productos')}"></header>
+
+<section class="portada">
+	<div class="contenedor">
+		<div class="portada__texto">
+			<p class="portada__etiqueta">Error 404</p>
+			<h2>No encontrado</h2>
+		</div>
+		<a class="boton" th:href="@{/productos}">Volver al catalogo</a>
+	</div>
+</section>
 
 <main class="contenedor">
-	<div class="barra">
-		<h2>No encontrado</h2>
-	</div>
 
-	<p class="aviso aviso--error" role="alert"
-	   th:text="${mensaje} ?: 'El recurso solicitado no existe.'">El recurso solicitado no existe.</p>
-
-	<p>
-		Es posible que el producto se haya eliminado desde otra pestana o desde la API REST.
+	<p class="aviso aviso--error" role="alert">
+		<span aria-hidden="true">&#9888;</span>
+		<span th:text="${mensaje} ?: 'El recurso solicitado no existe.'">El recurso solicitado no existe.</span>
 	</p>
 
-	<p>
-		<a class="boton" th:href="@{/productos}">Volver al listado</a>
-	</p>
+	<p>Es posible que el producto se haya eliminado desde otra pestana o desde la API REST.</p>
+
 </main>
 
 <footer th:replace="~{fragmentos/comunes :: pie}"></footer>

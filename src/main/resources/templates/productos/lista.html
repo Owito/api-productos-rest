@@ -3,27 +3,38 @@
 <head th:replace="~{fragmentos/comunes :: cabeza('Productos')}"></head>
 <body>
 
-<header th:replace="~{fragmentos/comunes :: encabezado}"></header>
+<header th:replace="~{fragmentos/comunes :: encabezado('productos')}"></header>
+
+<section class="portada">
+	<div class="contenedor">
+		<div class="portada__texto">
+			<p class="portada__etiqueta">Catalogo</p>
+			<h2>Productos</h2>
+			<p class="portada__conteo"
+			   th:text="${#lists.size(productos)} + (${#lists.size(productos)} == 1 ? ' producto registrado' : ' productos registrados')">
+				0 productos registrados
+			</p>
+		</div>
+		<a class="boton" th:href="@{/productos/nuevo}">Nuevo producto</a>
+	</div>
+</section>
 
 <main class="contenedor">
 
-	<p class="aviso" role="status" th:if="${mensaje}" th:text="${mensaje}"></p>
-
-	<div class="barra">
-		<h2>Productos</h2>
-		<span class="conteo"
-		      th:text="${#lists.size(productos)} + (${#lists.size(productos)} == 1 ? ' producto registrado' : ' productos registrados')">
-			0 productos registrados
-		</span>
-		<a class="boton" th:href="@{/productos/nuevo}">Nuevo producto</a>
-	</div>
-
-	<p class="vacio" th:if="${#lists.isEmpty(productos)}">
-		Todavia no hay productos registrados. Crea el primero para verlo aqui.
+	<p class="aviso" role="status" th:if="${mensaje}">
+		<span aria-hidden="true">&#10003;</span><span th:text="${mensaje}"></span>
 	</p>
+
+	<div class="vacio" th:if="${#lists.isEmpty(productos)}">
+		<strong>Todavia no hay productos</strong>
+		Crea el primero y aparecera aqui, y tambien en la API REST.
+	</div>
 
 	<ul class="fichas" th:unless="${#lists.isEmpty(productos)}">
 		<li class="ficha" th:each="producto : ${productos}">
+			<div class="ficha__portada" aria-hidden="true"
+			     th:style="'--giro:' + ${(producto.id % 5) * 18 - 36}"
+			     th:text="${#strings.toUpperCase(#strings.substring(producto.nombre, 0, 1))}">P</div>
 			<span class="ficha__identificador" th:text="'ID ' + ${producto.id}">ID 1</span>
 			<h3 class="ficha__nombre" th:text="${producto.nombre}">Nombre del producto</h3>
 			<p class="ficha__descripcion"

@@ -142,6 +142,7 @@ Segundo adaptador de entrada, renderizado en el servidor con Thymeleaf. Consume 
 | `/productos/{id}/editar` | `GET` | Formulario con los datos cargados |
 | `/productos/{id}` | `PUT` | Actualiza el producto |
 | `/productos/{id}` | `DELETE` | Elimina el producto |
+| `/creditos` | `GET` | Creditos academicos del trabajo |
 
 Los formularios HTML solo soportan `GET` y `POST`, asi que `PUT` y `DELETE` viajan en un campo
 oculto `_method` que Spring traduce con `HiddenHttpMethodFilter`. La interfaz usa asi los mismos
@@ -152,8 +153,34 @@ lleguen al manejador global y se conviertan en 404 o 409. El web las atrapa y re
 formulario con el error junto al campo que lo causo, porque una persona frente a un formulario no
 necesita un codigo de estado, necesita saber que corregir.
 
-No hay CSS ni JavaScript de terceros: una hoja de estilos propia, mobile first, con tema claro y
-oscuro segun la preferencia del sistema.
+### Sistema de diseno
+
+La interfaz aplica el lenguaje visual de las aplicaciones de streaming musical: base oscura por
+defecto, un unico verde de acento de alta saturacion, controles en forma de pildora que crecen al
+pasar el cursor, rejilla de tarjetas con portada cuadrada, y titulos muy apretados. No emplea
+marcas, logotipos ni tipografias propietarias de terceros, solo los patrones de interfaz.
+
+Los tokens estan en `static/css/estilos.css` y se resuelven en tres niveles:
+
+| Nivel | Cuando manda |
+|---|---|
+| `:root` | tema oscuro, el valor por defecto |
+| `@media (prefers-color-scheme: light)` | el sistema pide claro y el usuario no ha elegido |
+| `:root[data-tema="claro"]` / `[data-tema="oscuro"]` | el usuario eligio en el selector |
+
+**Modo oscuro y selector de tema.** El boton del encabezado cicla entre sistema, claro y oscuro.
+La eleccion se guarda en `localStorage` y la reaplica un script sincrono en el `<head>`, para que
+la pagina no parpadee al cargar. Si el navegador bloquea el almacenamiento, el selector sigue
+funcionando durante la sesion.
+
+Sin CSS ni JavaScript de terceros, sin build de front y sin peticiones a la red: una hoja de
+estilos y un archivo de 50 lineas.
+
+### Creditos
+
+`/creditos` muestra los datos academicos del trabajo. No estan escritos en el HTML sino en
+`app.creditos` dentro de `application.yml`, asi que corregir un integrante o una fecha es editar
+una linea de configuracion.
 
 ## Cómo ejecutar
 
@@ -234,6 +261,17 @@ curl -X PUT $API/1 -H "Content-Type: application/json" \
 curl -i -X DELETE $API/1
 ```
 
-## Licencia
+## Créditos
 
-Trabajo académico. Politécnico Grancolombiano, Maestría en Arquitectura de Software.
+Trabajo académico de la **Maestría en Arquitectura de Software** del **Politécnico
+Grancolombiano**, asignatura **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad
+sumativa. Periodo 2026-2, bloque 1. Tutor: Wilson Soto.
+
+Integrantes:
+
+- Carlos Guerra
+- Rafael Gutiérrez Correales
+- Paulo Reyes Rodríguez
+
+Los mismos datos se muestran en la aplicación en `/creditos` y se configuran en `app.creditos`
+dentro de `application.yml`.

@@ -3,23 +3,53 @@
 <head th:fragment="cabeza(titulo)">
 	<meta charset="UTF-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<title th:text="${titulo} + ' | API de Productos'">API de Productos</title>
+	<meta name="color-scheme" content="dark light">
+	<title th:text="${titulo} + ' | Catalogo de Productos'">Catalogo de Productos</title>
 	<link rel="stylesheet" th:href="@{/css/estilos.css}">
+	<!--
+	  Aplica el tema guardado antes de pintar, para que no haya un parpadeo de
+	  color al cargar. Es la unica linea de script que corre de forma sincrona.
+	-->
+	<script th:inline="none">
+		(function () {
+			var t = null;
+			try { t = localStorage.getItem('tema'); } catch (e) { /* almacenamiento bloqueado */ }
+			if (t === 'claro' || t === 'oscuro') {
+				document.documentElement.setAttribute('data-tema', t);
+			}
+		})();
+	</script>
+	<script th:src="@{/js/tema.js}" defer></script>
 </head>
 <body>
 
-<header class="encabezado" th:fragment="encabezado">
+<header class="encabezado" th:fragment="encabezado(seccion)">
 	<div class="contenedor">
-		<h1 class="marca"><a th:href="@{/productos}">API de Productos</a></h1>
-		<p class="subtitulo">Arquitectura de Aplicaciones Web &middot; Unidad 2</p>
+		<h1 class="marca">
+			<span class="marca__disco" aria-hidden="true"></span>
+			<a th:href="@{/productos}">Catalogo de Productos</a>
+		</h1>
+
+		<nav class="navegacion" aria-label="Secciones">
+			<a th:href="@{/productos}"
+			   th:attr="aria-current=${seccion == 'productos'} ? 'page' : null">Productos</a>
+			<a th:href="@{/creditos}"
+			   th:attr="aria-current=${seccion == 'creditos'} ? 'page' : null">Creditos</a>
+			<a th:href="@{/swagger-ui.html}">API</a>
+		</nav>
+
+		<button type="button" class="tema" id="selector-tema" aria-live="polite">
+			<span class="tema__icono" id="tema-icono" aria-hidden="true">&#9679;</span>
+			<span id="tema-etiqueta">Tema</span>
+		</button>
 	</div>
 </header>
 
 <footer class="pie" th:fragment="pie">
 	<div class="contenedor">
-		<span>Adaptador web sobre el mismo nucleo hexagonal que la API REST.</span>
-		<a th:href="@{/swagger-ui.html}">Documentacion de la API</a>
-		<a th:href="@{/api/v1/productos}">Ver el JSON del listado</a>
+		<span>Interfaz web y API REST sobre el mismo nucleo hexagonal.</span>
+		<a th:href="@{/creditos}">Creditos del trabajo</a>
+		<a th:href="@{/api/v1/productos}">JSON del listado</a>
 	</div>
 </footer>
 

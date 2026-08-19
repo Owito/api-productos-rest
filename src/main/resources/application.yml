@@ -39,3 +39,20 @@ springdoc:
 logging:
   level:
     co.edu.poli.productos: INFO
+
+# Datos academicos mostrados en /creditos.
+app:
+  creditos:
+    integrantes:
+      - Carlos Guerra
+      - "Rafael Gutiérrez Correales"
+      - "Paulo Reyes Rodríguez"
+    programa: Maestria en Arquitectura de Software
+    asignatura: Arquitectura de Aplicaciones Web
+    codigo-asignatura: TIC51372
+    unidad: Unidad 2, actividad sumativa
+    tutor: Wilson Soto
+    institucion: Politecnico Grancolombiano
+    periodo: 2026-2, bloque 1
+    fecha-de-entrega: 25 de agosto de 2026
+    repositorio: https://github.com/Owito/api-productos-rest
