@@ -8,6 +8,9 @@ spring:
     password: ${DB_PASSWORD}
     hikari:
       maximum-pool-size: 5
+      # Neon en capa gratuita suspende el computo por inactividad: la primera
+      # conexion despierta la base y puede tardar unos segundos.
+      connection-timeout: 30000
+      initialization-fail-timeout: 60000
   jpa:
-    database-platform: org.hibernate.dialect.PostgreSQLDialect
     show-sql: false

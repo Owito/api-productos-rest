@@ -116,12 +116,14 @@ La aplicación queda en `http://localhost:8080`. La consola de H2 está en `/h2-
 SPRING_PROFILES_ACTIVE=neon DB_URL=... DB_USERNAME=... DB_PASSWORD=... ./gradlew bootRun
 ```
 
-En Windows PowerShell:
+En Windows PowerShell basta con el script incluido, que lee el `.env`:
 
 ```powershell
-$env:SPRING_PROFILES_ACTIVE="neon"; $env:DB_URL="jdbc:postgresql://...?sslmode=require"
-$env:DB_USERNAME="..."; $env:DB_PASSWORD="..."; .\gradlew.bat bootRun
+.\run-neon.ps1
 ```
+
+Neon suspende el cómputo por inactividad en la capa gratuita: la primera conexión despierta la
+base y puede tardar unos segundos.
 
 ## Pruebas
 
