@@ -1,8 +1,8 @@
 # API de Productos
 
 Backend con servicios RESTful que expone operaciones CRUD sobre la entidad `Producto`,
-construido con **Spring Boot + Kotlin**, persistencia mediante **ORM (Spring Data JPA sobre
-Hibernate)** y base de datos **PostgreSQL** alojada en Neon.
+construido con **Spring Boot + Kotlin** bajo **arquitectura hexagonal**, persistencia mediante
+**ORM (Spring Data JPA sobre Hibernate)** y base de datos **PostgreSQL** alojada en Neon.
 
 Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sumativa.
 
@@ -22,31 +22,55 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 
 ## Arquitectura
 
-Separación por responsabilidad en capas. Cada paquete tiene una única razón para cambiar y
-depende solo de la capa inmediatamente inferior.
+**Hexagonal (puertos y adaptadores).** El dominio y los casos de uso no dependen de ningun
+framework; la infraestructura se adapta a las interfaces que define el nucleo.
 
 ```
 src/main/kotlin/co/edu/poli/productos/
-├── ProductosApplication.kt        Punto de entrada
-├── config/                        Configuración transversal (OpenAPI)
-├── controller/                    Capa web: mapea HTTP al caso de uso, no contiene lógica
-├── dto/                           Contrato público de entrada y salida, con validaciones
-├── mapper/                        Traducción DTO <-> entidad
-├── service/                       Lógica de negocio y control transaccional
-├── repository/                    Acceso a datos mediante Spring Data JPA
-├── model/                         Entidad de dominio persistente
-└── exception/                     Excepciones propias y manejo centralizado de errores
+|
++-- domain/                                  NUCLEO. Kotlin puro, cero dependencias
+|   +-- model/Producto.kt                    modelo con sus invariantes
+|   +-- exception/                           hechos del negocio, no codigos HTTP
+|
++-- application/                             CASOS DE USO. No conoce Spring
+|   +-- port/input/GestionarProductosUseCase   puerto de entrada  (driving)
+|   +-- port/output/ProductoRepositoryPort     puerto de salida   (driven)
+|   +-- service/ProductoService.kt             implementa el caso de uso
+|
++-- infrastructure/                          ADAPTADORES. Aqui vive la tecnologia
+    +-- input/rest/                          adaptador de entrada
+    |   +-- ProductoRestAdapter.kt             @RestController
+    |   +-- dto/                               contrato publico de la API
+    |   +-- mapper/                            DTO  <->  dominio
+    |   +-- error/                             traduce excepciones a HTTP
+    +-- output/persistence/                  adaptador de salida
+    |   +-- ProductoPersistenceAdapter.kt      implementa el puerto de salida
+    |   +-- entity/ProductoJpaEntity.kt        entidad JPA, detalle de infraestructura
+    |   +-- repository/                        Spring Data JPA
+    |   +-- mapper/                            entidad  <->  dominio
+    +-- config/                              cableado y OpenAPI
 ```
 
-Reglas que sostienen la estructura:
+Las tres reglas que sostienen la estructura:
 
-1. **La entidad nunca sale por HTTP.** El controlador solo habla en DTO, así el esquema de la
-   base de datos puede cambiar sin romper a los clientes.
-2. **El controlador no conoce el repositorio.** Toda coordinación pasa por el servicio.
-3. **Ningún controlador atrapa excepciones.** Todas terminan en `ManejadorGlobalDeErrores`,
-   que las traduce a un mismo contrato de error y al código HTTP correcto.
+1. **El dominio no importa nada.** `Producto` no tiene anotaciones de JPA, Jackson ni Bean
+   Validation. Sus invariantes se cumplen aunque cambie la base de datos o el protocolo.
+2. **Los puertos los define el nucleo.** `ProductoRepositoryPort` es una interfaz de la capa de
+   aplicacion y la infraestructura se adapta a ella. Las dependencias apuntan hacia adentro.
+3. **La aplicacion no conoce Spring.** `ProductoService` no lleva `@Service`: se registra como
+   bean en `infrastructure/config/ConfiguracionDeCasosDeUso`.
 
-Las decisiones y sus alternativas descartadas están registradas en [`docs/adr/`](docs/adr).
+La consecuencia practica es que el nucleo se prueba sin levantar Spring, sin base de datos y sin
+HTTP, contra un adaptador falso en memoria. El razonamiento completo, con las alternativas
+descartadas y el costo que tiene esta decision, esta en [`docs/adr/`](docs/adr).
+
+Hay tres representaciones distintas del mismo concepto, cada una con un dueno:
+
+| Modelo | Capa | Para que existe |
+|---|---|---|
+| `Producto` | dominio | Reglas de negocio e invariantes |
+| `ProductoJpaEntity` | infraestructura de salida | Mapeo a la tabla `productos` |
+| `ProductoRequest` / `ProductoResponse` | infraestructura de entrada | Contrato publico de la API |
 
 ## Modelo de datos
 
@@ -133,8 +157,17 @@ base y puede tardar unos segundos.
 ./gradlew test
 ```
 
-13 pruebas: carga de contexto, 5 de lógica de negocio y 7 de la capa web que cubren los cuatro
-verbos HTTP y los casos de error.
+23 pruebas repartidas segun la arquitectura:
+
+| Suite | Pruebas | Levanta Spring |
+|---|---|---|
+| `ProductoTest` (dominio) | 6 | no |
+| `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 8 | no |
+| `ProductoRestAdapterTest` (integracion, los 4 verbos y los errores) | 8 | si |
+| `ProductosApplicationTests` (carga de contexto) | 1 | si |
+
+Las 14 pruebas del nucleo corren sin contenedor de dependencias ni base de datos. Eso es lo que
+compra la arquitectura hexagonal.
 
 ### Manuales con Postman
 

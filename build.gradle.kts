@@ -52,6 +52,10 @@ allOpen {
 	annotation("jakarta.persistence.Entity")
 	annotation("jakarta.persistence.MappedSuperclass")
 	annotation("jakarta.persistence.Embeddable")
+	// La capa de aplicacion usa jakarta.transaction.Transactional en vez de la
+	// anotacion de Spring, para no depender del framework. El plugin kotlin-spring
+	// no la reconoce, asi que hay que abrirla aqui para que Spring pueda proxearla.
+	annotation("jakarta.transaction.Transactional")
 }
 
 tasks.withType<Test> {
