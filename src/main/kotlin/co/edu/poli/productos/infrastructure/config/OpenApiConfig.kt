@@ -5,7 +5,10 @@ import io.swagger.v3.oas.models.info.Info
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 
-/** Metadatos de la documentacion OpenAPI expuesta en /swagger-ui.html. */
+/**
+ * Metadatos del documento OpenAPI que springdoc publica en /v3/api-docs y que
+ * Scalar renderiza en /docs.
+ */
 @Configuration
 class OpenApiConfig {
 

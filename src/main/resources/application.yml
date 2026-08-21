@@ -44,10 +44,50 @@ management:
       probes:
         enabled: true
 
+# Documentacion de la API, en dos piezas separadas: springdoc genera la
+# especificacion OpenAPI a partir de los controladores y la publica en
+# /v3/api-docs, y Scalar es la interfaz que la lee y permite probar los
+# endpoints desde el navegador en /docs. El porque de Scalar en vez de
+# Swagger UI esta en docs/adr/0004-scalar-como-interfaz-de-documentacion.md.
 springdoc:
-  swagger-ui:
-    path: /swagger-ui.html
-    operationsSorter: method
+  api-docs:
+    path: /v3/api-docs
+  # La especificacion describe la API y nada mas: sin este filtro, springdoc
+  # tambien documentaria las rutas que la propia interfaz de Scalar publica.
+  paths-to-match: /api/v1/**
+
+scalar:
+  enabled: true
+  path: /docs
+  # Ruta relativa: el navegador la resuelve contra el mismo origen, asi que
+  # sirve igual en local, en el contenedor y en Render sin tocar la config.
+  url: /v3/api-docs
+  page-title: API de Productos | Documentacion
+  operation-sorter: method
+  dark-mode: true
+  # La pagina es documentacion, no un banco de trabajo: fuera la barra de
+  # herramientas de desarrollo y el generador de servidores MCP.
+  show-developer-tools: never
+  mcp:
+    disabled: true
+  # Ni analitica ni asistente de IA: la pagina no habla con servicios de
+  # terceros, solo con esta aplicacion.
+  telemetry: false
+  agent:
+    disabled: true
+  # Alinea la documentacion con el sistema de diseno de la interfaz web:
+  # base oscura y un unico verde de acento.
+  custom-css: |
+    .dark-mode {
+      --scalar-color-accent: #1ed760;
+      --scalar-background-1: #121212;
+      --scalar-background-2: #181818;
+      --scalar-background-3: #242424;
+      --scalar-border-color: #2e2e2e;
+    }
+    .light-mode {
+      --scalar-color-accent: #148a3c;
+    }
 
 logging:
   level:

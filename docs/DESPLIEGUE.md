@@ -76,7 +76,7 @@ curl "$B/api/v1/productos?categoria=AUDIO"   # filtro por categoria
 curl -o /dev/null -s -w "%{http_code}\n" $B/productos   # 200, interfaz web
 ```
 
-En el navegador: `/productos` (catálogo), `/creditos` y `/swagger-ui.html`.
+En el navegador: `/productos` (catálogo), `/creditos` y `/docs` (documentación interactiva).
 
 Verificado el 19 de agosto de 2026 contra el despliegue real: los cinco endpoints en 200, el
 catálogo sembrado con 18 productos, el filtro por categoría, el ciclo completo POST/PUT/DELETE, y

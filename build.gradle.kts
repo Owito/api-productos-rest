@@ -29,8 +29,14 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-starter-validation")
 	// Chequeo de salud para la plataforma de despliegue
 	implementation("org.springframework.boot:spring-boot-starter-actuator")
-	// Documentacion y cliente HTTP embebido (Swagger UI)
-	implementation("org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.17")
+	// Generacion del documento OpenAPI a partir de los controladores. Es el
+	// artefacto "-api": produce la especificacion en /v3/api-docs y no trae
+	// interfaz, porque la que se usa es Scalar.
+	implementation("org.springdoc:springdoc-openapi-starter-webmvc-api:2.8.17")
+	// Interfaz de documentacion y cliente HTTP embebido que consume ese
+	// documento. El paquete trae su propio bundle de JavaScript, asi que la
+	// pagina no depende de ninguna CDN externa.
+	implementation("com.scalar.maven:scalar-webmvc:0.6.65")
 	// Segundo adaptador de entrada: interfaz web renderizada en el servidor
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
 

@@ -16,7 +16,8 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 | Catálogo web | <https://api-productos-rest.onrender.com/productos> |
 | Créditos | <https://api-productos-rest.onrender.com/creditos> |
 | API REST | <https://api-productos-rest.onrender.com/api/v1/productos> |
-| Documentación interactiva | <https://api-productos-rest.onrender.com/swagger-ui.html> |
+| Documentación interactiva | <https://api-productos-rest.onrender.com/docs> |
+| Especificación OpenAPI | <https://api-productos-rest.onrender.com/v3/api-docs> |
 | Estado del servicio | <https://api-productos-rest.onrender.com/actuator/health> |
 
 Corre en el plan gratuito de Render contra la base de datos de Neon. Si lleva rato sin visitas, la
@@ -37,7 +38,8 @@ contra este despliegue, no solo en local.
 | ORM | Spring Data JPA (Hibernate) | Genera el esquema y resuelve el acceso a datos sin SQL manual |
 | Base de datos | PostgreSQL (Neon, capa gratuita) | Relacional, gestionada, con conexión TLS |
 | Base de datos local | H2 en memoria | El proyecto se clona y se ejecuta sin configurar credenciales |
-| Documentación y pruebas | springdoc OpenAPI + Swagger UI | Cliente HTTP embebido para probar los endpoints |
+| Especificación de la API | springdoc OpenAPI | Genera el documento OpenAPI leyendo los controladores, sin escribirlo a mano |
+| Documentación interactiva | Scalar | Lee esa especificación y deja probar los endpoints desde el navegador; trae su propio JavaScript, sin CDN ([ADR 0004](docs/adr/0004-scalar-como-interfaz-de-documentacion.md)) |
 | Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
 | Empaquetado | Docker multietapa | La imagen final lleva solo el JRE y el `.jar` |
@@ -133,8 +135,13 @@ Base: `/api/v1/productos`
 | `PUT` | `/api/v1/productos/{id}` | Actualiza un producto | `200` | `400`, `404`, `409` |
 | `DELETE` | `/api/v1/productos/{id}` | Elimina un producto | `204` | `400`, `404` |
 
-Documentación interactiva: `http://localhost:8080/swagger-ui.html`
+Documentación interactiva: `http://localhost:8080/docs`
 Especificación OpenAPI: `http://localhost:8080/v3/api-docs`
+
+La especificación es el contrato y la interfaz es solo un consumidor más: springdoc publica el
+documento en `/v3/api-docs` y Scalar lo renderiza en `/docs`. Por eso la ruta nombra la función y
+no la herramienta. El porqué está en
+[`docs/adr/0004`](docs/adr/0004-scalar-como-interfaz-de-documentacion.md).
 
 ### Contrato de error
 
@@ -318,7 +325,7 @@ Nunca duplica: si ya hay productos, no hace nada.
 ./gradlew test
 ```
 
-42 pruebas repartidas según la arquitectura:
+46 pruebas repartidas según la arquitectura:
 
 | Suite | Pruebas | Levanta Spring |
 |---|---|---|
@@ -326,6 +333,7 @@ Nunca duplica: si ya hay productos, no hace nada.
 | `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 9 | no |
 | `ProductoRestAdapterTest` (integración REST, los 4 verbos, filtros y errores) | 12 | sí |
 | `ProductoWebAdapterTest` (integración web, formularios, filtros y _method) | 11 | sí |
+| `DocumentacionApiTest` (especificación OpenAPI e interfaz de Scalar) | 4 | sí |
 | `ProductosApplicationTests` (carga de contexto) | 1 | sí |
 
 Las 18 pruebas del núcleo corren sin contenedor de dependencias ni base de datos. Eso es lo que
