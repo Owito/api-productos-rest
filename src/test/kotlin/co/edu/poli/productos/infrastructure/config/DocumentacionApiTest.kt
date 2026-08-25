@@ -51,4 +51,24 @@ class DocumentacionApiTest {
 	fun `la interfaz anterior de swagger ya no se publica`() {
 		mockMvc.perform(get("/swagger-ui.html")).andExpect(status().isNotFound)
 	}
+
+	/**
+	 * Scalar carga su bundle con una ruta relativa, asi que la pagina solo
+	 * funciona en `/docs` exacto. La barra final se redirige para que no quede
+	 * una direccion parecida que responde 404.
+	 */
+	@Test
+	fun `la barra final redirige a la unica direccion de la documentacion`() {
+		mockMvc.perform(get("/docs/"))
+			.andExpect(status().is3xxRedirection)
+			.andExpect(org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl("/docs"))
+	}
+
+	/** La configuracion de Scalar referencia este archivo, y antes no existia. */
+	@Test
+	fun `el favicon que pide la documentacion se sirve`() {
+		mockMvc.perform(get("/favicon.svg"))
+			.andExpect(status().isOk)
+			.andExpect(content().contentTypeCompatibleWith("image/svg+xml"))
+	}
 }

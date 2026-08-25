@@ -12,7 +12,6 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException
-import org.springframework.web.servlet.NoHandlerFoundException
 
 /**
  * Traduce las excepciones del dominio a codigos de estado HTTP.
@@ -22,6 +21,11 @@ import org.springframework.web.servlet.NoHandlerFoundException
  *
  * Esta acotado por paquete a proposito. Sin ese limite tambien atenderia al
  * adaptador web, que necesita responder HTML y no JSON.
+ *
+ * Ese mismo limite tiene una consecuencia que conviene tener presente: un advice
+ * acotado solo se consulta cuando la peticion llego a un controlador de su
+ * paquete. Las rutas que no existen en ningun adaptador no llegan a ninguno, y
+ * las atiende `infrastructure.input.ManejadorDeRutasInexistentes`.
  */
 @RestControllerAdvice(basePackages = ["co.edu.poli.productos.infrastructure.input.rest"])
 class ManejadorGlobalDeErrores {
@@ -59,10 +63,6 @@ class ManejadorGlobalDeErrores {
 	@ExceptionHandler(MethodArgumentTypeMismatchException::class)
 	fun tipoInvalido(ex: MethodArgumentTypeMismatchException, req: HttpServletRequest): ResponseEntity<ApiError> =
 		responder(HttpStatus.BAD_REQUEST, "El parametro " + ex.name + " no tiene un formato valido", req)
-
-	@ExceptionHandler(NoHandlerFoundException::class)
-	fun rutaInexistente(ex: NoHandlerFoundException, req: HttpServletRequest): ResponseEntity<ApiError> =
-		responder(HttpStatus.NOT_FOUND, "La ruta " + ex.requestURL + " no existe en esta API", req)
 
 	/** Red de seguridad: nada sale al cliente como traza de pila. */
 	@ExceptionHandler(Exception::class)

@@ -3,6 +3,8 @@ package co.edu.poli.productos.infrastructure.config
 import com.scalar.maven.webmvc.ScalarWebMvcAutoConfiguration
 import org.springframework.context.annotation.Configuration
 import org.springframework.context.annotation.Import
+import org.springframework.web.servlet.config.annotation.ViewControllerRegistry
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer
 
 /**
  * Registra la interfaz de documentacion de Scalar, que se sirve en /docs y lee
@@ -19,4 +21,17 @@ import org.springframework.context.annotation.Import
  */
 @Configuration
 @Import(ScalarWebMvcAutoConfiguration::class)
-class ScalarConfig
+class ScalarConfig : WebMvcConfigurer {
+
+	/**
+	 * Scalar publica la pagina en `/docs` exacto, y ademas carga su bundle con
+	 * una ruta relativa (`docs/scalar.js`). Las dos cosas se rompen si alguien
+	 * escribe la barra final: `/docs/` no correspondia a ninguna ruta y la
+	 * relativa habria resuelto a `/docs/docs/scalar.js`. Se redirige en vez de
+	 * duplicar el mapeo, para que la pagina siga teniendo una sola direccion
+	 * canonica.
+	 */
+	override fun addViewControllers(registry: ViewControllerRegistry) {
+		registry.addRedirectViewController("/docs/", "/docs")
+	}
+}

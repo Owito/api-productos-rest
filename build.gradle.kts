@@ -43,6 +43,13 @@ dependencies {
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
 
+	// Migraciones de esquema. El esquema deja de generarlo el ORM: lo declaran
+	// los scripts de db/migration y Hibernate solo lo valida al arrancar.
+	implementation("org.flywaydb:flyway-core")
+	// Flyway 10 saco el soporte de cada motor del nucleo a su propio modulo, asi
+	// que hay que declarar los dos que usa el proyecto.
+	runtimeOnly("org.flywaydb:flyway-database-postgresql")
+
 	// Motores de base de datos: H2 para el perfil local, PostgreSQL para Neon
 	runtimeOnly("com.h2database:h2")
 	runtimeOnly("org.postgresql:postgresql")

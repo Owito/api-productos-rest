@@ -22,7 +22,9 @@
 		<span th:text="${mensaje} ?: 'El recurso solicitado no existe.'">El recurso solicitado no existe.</span>
 	</p>
 
-	<p>Es posible que el producto se haya eliminado desde otra pestana o desde la API REST.</p>
+	<!-- El remate lo pone quien atiende el error: no es lo mismo un producto que
+	     ya no esta que una direccion que nunca existio. -->
+	<p th:if="${pista}" th:text="${pista}">Pista sobre que hacer a continuacion.</p>
 
 </main>
 

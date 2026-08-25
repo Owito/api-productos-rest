@@ -35,7 +35,8 @@ contra este despliegue, no solo en local.
 |---|---|---|
 | Lenguaje | Kotlin 2.2 sobre JDK 17 | Tipos no nulos por defecto, menos código ceremonial que Java |
 | Framework backend | Spring Boot 3.5 | Framework de referencia del módulo, convención clara de capas |
-| ORM | Spring Data JPA (Hibernate) | Genera el esquema y resuelve el acceso a datos sin SQL manual |
+| ORM | Spring Data JPA (Hibernate) | Resuelve el acceso a datos sin SQL manual. Ya no genera el esquema: solo lo valida al arrancar |
+| Migraciones | Flyway, con scripts por motor | El esquema queda versionado y revisable, y un desajuste falla al arrancar en vez de corromperse en silencio ([ADR 0005](docs/adr/0005-flyway-como-dueno-del-esquema.md)) |
 | Base de datos | PostgreSQL (Neon, capa gratuita) | Relacional, gestionada, con conexión TLS |
 | Base de datos local | H2 en memoria | El proyecto se clona y se ejecuta sin configurar credenciales |
 | Especificación de la API | springdoc OpenAPI | Genera el documento OpenAPI leyendo los controladores, sin escribirlo a mano |
@@ -63,6 +64,7 @@ src/main/kotlin/co/edu/poli/productos/
 |   +-- service/ProductoService.kt             implementa el caso de uso
 |
 +-- infrastructure/                          ADAPTADORES. Aqui vive la tecnologia
+    +-- input/ManejadorDeRutasInexistentes.kt rutas que no existen en ninguno
     +-- input/rest/                          adaptador de entrada 1: API REST
     |   +-- ProductoRestAdapter.kt             @RestController
     |   +-- dto/                               contrato publico de la API
@@ -107,19 +109,58 @@ Hay tres representaciones distintas del mismo concepto, cada una con un dueno:
 
 ## Modelo de datos
 
-Hibernate crea y mantiene la tabla `productos` a partir de la entidad.
+La tabla `productos` la declaran las migraciones de Flyway en `src/main/resources/db/migration`, y
+Hibernate solo comprueba al arrancar que corresponde al mapeo.
 
 | Campo | Tipo | Restricciones |
 |---|---|---|
 | `id` | `BIGINT` autoincremental | Llave primaria |
-| `nombre` | `VARCHAR(120)` | Obligatorio, único en la práctica (validado en el servicio) |
+| `nombre` | `VARCHAR(120)` | Obligatorio, único por restricción de la base (`uk_productos_nombre`) |
 | `descripcion` | `VARCHAR(500)` | Opcional |
 | `precio` | `NUMERIC(12,2)` | Obligatorio, mayor que cero |
 | `categoria` | `VARCHAR(30)` | Obligatorio, uno de los ocho valores del catálogo, con índice |
 
+La unicidad del nombre está en dos sitios a propósito, y no es duplicación. El caso de uso la
+comprueba antes de guardar para poder responder un `409` con un mensaje legible, pero esa
+comprobación es leer-y-después-escribir: entre las dos operaciones cabe otra petición, y con más de
+una instancia de la aplicación cabe con holgura. La restricción de la base es la que no se puede
+burlar por concurrencia. Cuando salta, el adaptador de persistencia traduce la violación al mismo
+hecho de negocio (`NombreDeProductoDuplicadoException`), así que el núcleo no se entera de que
+existe una restricción y la API sigue respondiendo `409` sin cambiar una línea.
+
+La restricción cubre la coincidencia exacta. La regla completa ignora mayúsculas y esa sigue
+viviendo en el caso de uso: expresarla en la base pediría un índice funcional sobre `lower(nombre)`,
+que PostgreSQL soporta y H2 no. Ponerlo en un solo motor haría que local y producción se
+comportaran distinto, que es peor que la limitación.
+
 Las categorías son un conjunto cerrado definido en el dominio, no una tabla: `AUDIO`,
 `PERIFERICOS`, `PANTALLAS`, `COMPUTO`, `ALMACENAMIENTO`, `CONECTIVIDAD`, `ENERGIA` y `MOBILIARIO`.
 El porqué está en [`docs/adr/0003`](docs/adr/0003-categoria-como-objeto-de-valor.md).
+
+### Migraciones
+
+El esquema no lo genera el ORM: lo declaran migraciones versionadas de Flyway, y Hibernate corre con
+`ddl-auto: validate`, así que **se niega a arrancar si la tabla no corresponde al mapeo**. Un
+desajuste sale como un fallo de arranque ruidoso en vez de una alteración silenciosa.
+
+```
+src/main/resources/db/migration/
++-- h2/           V1__esquema_inicial.sql   V2__unicidad_de_nombre.sql
++-- postgresql/   V1__esquema_inicial.sql   V2__unicidad_de_nombre.sql
+```
+
+Hay una carpeta por motor, elegida en tiempo de ejecución con `locations: classpath:db/migration/{vendor}`.
+No es duplicación por gusto: el mismo `@Enumerated(STRING)` se traduce al tipo `ENUM` nativo en H2 y
+a un `varchar` con `CHECK` en PostgreSQL, así que un solo script rompería uno de los dos.
+
+**Al agregar una migración, tenerlo presente: lo que se escriba en `V1` no se ejecuta en
+producción.** La base de Neon ya existía, creada por el ORM y con datos, y se adopta con
+`baseline-on-migrate`: Flyway la marca como si `V1` ya estuviera aplicada y sigue desde ahí. Por eso
+la restricción única vive en `V2`. El razonamiento completo está en
+[`docs/adr/0005`](docs/adr/0005-flyway-como-dueno-del-esquema.md).
+
+Verificado contra un PostgreSQL real en los dos escenarios: base vacía (aplica `V1` y `V2`) y base
+preexistente sin historial (adopta con baseline y aplica solo `V2`, conservando los datos).
 
 ## Endpoints
 
@@ -145,7 +186,7 @@ no la herramienta. El porqué está en
 
 ### Contrato de error
 
-Todos los fallos responden con la misma estructura:
+Todos los fallos de la API responden con la misma estructura, incluidas las rutas que no existen:
 
 ```json
 {
@@ -160,6 +201,13 @@ Todos los fallos responden con la misma estructura:
   ]
 }
 ```
+
+Cubrir las rutas inexistentes tiene un detalle que no es evidente: un
+`@RestControllerAdvice` acotado por paquete solo se consulta cuando la petición llegó a un
+controlador de ese paquete, y una ruta que no existe no llega a ninguno. Por eso ese caso lo
+atiende `infrastructure/input/ManejadorDeRutasInexistentes`, que no lleva selectores y reparte por
+prefijo: bajo `/api` responde con este contrato, y en cualquier otra ruta con la página de error,
+porque una persona frente al navegador no lee JSON.
 
 ## Interfaz web
 
@@ -208,7 +256,7 @@ la pagina no parpadee al cargar. Si el navegador bloquea el almacenamiento, el s
 funcionando durante la sesion.
 
 Sin CSS ni JavaScript de terceros, sin build de front y sin peticiones a la red: una hoja de
-estilos y un archivo de 50 lineas.
+estilos y un archivo de 61 lineas.
 
 ### Creditos
 
@@ -265,8 +313,9 @@ docker run --rm -p 8080:8080 --env-file .env -e APP_DATOS_DEMO=true api-producto
 ```
 
 La imagen final lleva solo el JRE y el `.jar`: ni código fuente, ni Gradle, ni el compilador de
-Kotlin. Corre con un usuario sin privilegios. Del actuator solo se expone `health`; ningún otro
-endpoint queda accesible.
+Kotlin. Corre con un usuario sin privilegios. Del actuator solo se expone `health`: ningún otro
+endpoint queda accesible, y el índice de descubrimiento de `/actuator`, que listaba los endpoints
+publicados, está apagado con `management.endpoints.web.discovery.enabled: false`.
 
 El servicio se conectó apuntando al **repositorio público por URL**, y no a través de la aplicación
 de GitHub de Render, para no ampliar los permisos que Render tiene sobre la cuenta. El costo de esa
@@ -325,7 +374,7 @@ Nunca duplica: si ya hay productos, no hace nada.
 ./gradlew test
 ```
 
-46 pruebas repartidas según la arquitectura:
+54 pruebas repartidas según la arquitectura:
 
 | Suite | Pruebas | Levanta Spring |
 |---|---|---|
@@ -333,7 +382,9 @@ Nunca duplica: si ya hay productos, no hace nada.
 | `ProductoServiceTest` (casos de uso, adaptador falso en memoria) | 9 | no |
 | `ProductoRestAdapterTest` (integración REST, los 4 verbos, filtros y errores) | 12 | sí |
 | `ProductoWebAdapterTest` (integración web, formularios, filtros y _method) | 11 | sí |
-| `DocumentacionApiTest` (especificación OpenAPI e interfaz de Scalar) | 4 | sí |
+| `DocumentacionApiTest` (especificación OpenAPI, interfaz de Scalar y sus rutas) | 6 | sí |
+| `ProductoPersistenceAdapterTest` (unicidad en la base y su traducción al dominio) | 3 | sí |
+| `ManejadorDeRutasInexistentesTest` (contrato de error en rutas que no existen) | 3 | sí |
 | `ProductosApplicationTests` (carga de contexto) | 1 | sí |
 
 Las 18 pruebas del núcleo corren sin contenedor de dependencias ni base de datos. Eso es lo que

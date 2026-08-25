@@ -10,6 +10,7 @@ import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Index
 import jakarta.persistence.Table
+import jakarta.persistence.UniqueConstraint
 import java.math.BigDecimal
 
 /**
@@ -22,6 +23,17 @@ import java.math.BigDecimal
 @Table(
 	name = "productos",
 	indexes = [Index(name = "idx_productos_categoria", columnList = "categoria")],
+	// La regla "dos productos no se llaman igual" la comprueba el caso de uso
+	// antes de guardar, pero esa comprobacion es leer-y-despues-escribir: entre
+	// las dos operaciones cabe otra peticion, y con mas de una instancia de la
+	// aplicacion cabe con holgura. La restriccion en la base es la que no se
+	// puede burlar por concurrencia.
+	//
+	// Cubre la coincidencia exacta. La regla completa ignora mayusculas y esa
+	// sigue viviendo en el caso de uso: expresarla en la base pediria un indice
+	// funcional sobre lower(nombre), que no es portable entre H2 y PostgreSQL
+	// con el esquema generado por el ORM.
+	uniqueConstraints = [UniqueConstraint(name = "uk_productos_nombre", columnNames = ["nombre"])],
 )
 class ProductoJpaEntity(
 

@@ -34,6 +34,10 @@ class ManejadorDeErroresWeb {
 		model.addAttribute("codigo", "Error 404")
 		model.addAttribute("titulo", "No encontrado")
 		model.addAttribute("mensaje", ex.message)
+		model.addAttribute(
+			"pista",
+			"Es posible que el producto se haya eliminado desde otra pestana o desde la API REST.",
+		)
 		return "error/no-encontrado"
 	}
 }
