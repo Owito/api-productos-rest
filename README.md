@@ -4,10 +4,11 @@ Backend con servicios RESTful que expone operaciones CRUD sobre la entidad `Prod
 construido con **Spring Boot + Kotlin** bajo **arquitectura hexagonal**, persistencia mediante
 **ORM (Spring Data JPA sobre Hibernate)** y base de datos **PostgreSQL** alojada en Neon.
 
-El mismo nucleo se expone por **dos adaptadores de entrada**: una API REST en `/api/v1/productos`
-y una interfaz web renderizada en el servidor en `/productos`.
+El mismo nucleo se expone por **tres adaptadores de entrada**: una API REST en `/api/v1/productos`,
+una interfaz web renderizada en el servidor en `/productos` y una **API GraphQL** en `/graphql`.
 
-Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sumativa.
+Módulo **Arquitectura de Aplicaciones Web (TIC51372)**: Unidad 2, actividad sumativa (REST y web),
+y Unidad 3, actividad formativa (GraphQL).
 
 ## En línea
 
@@ -18,6 +19,8 @@ Módulo **Arquitectura de Aplicaciones Web (TIC51372)**, Unidad 2, actividad sum
 | API REST | <https://api-productos-rest.onrender.com/api/v1/productos> |
 | Documentación interactiva | <https://api-productos-rest.onrender.com/docs> |
 | Especificación OpenAPI | <https://api-productos-rest.onrender.com/v3/api-docs> |
+| API GraphQL (consola) | <https://api-productos-rest.onrender.com/graphiql> |
+| Esquema GraphQL | <https://api-productos-rest.onrender.com/graphql/schema> |
 | Estado del servicio | <https://api-productos-rest.onrender.com/actuator/health> |
 
 Corre en el plan gratuito de Render contra la base de datos de Neon. Si lleva rato sin visitas, la
@@ -42,6 +45,7 @@ contra este despliegue, no solo en local.
 | Especificación de la API | springdoc OpenAPI | Genera el documento OpenAPI leyendo los controladores, sin escribirlo a mano |
 | Documentación interactiva | Scalar | Lee esa especificación y deja probar los endpoints desde el navegador; trae su propio JavaScript, sin CDN ([ADR 0004](docs/adr/0004-scalar-como-interfaz-de-documentacion.md)) |
 | Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
+| API GraphQL | Spring for GraphQL sobre GraphQL Java | Tercer adaptador de entrada, con el esquema como contrato y GraphiQL como consola ([ADR 0006](docs/adr/0006-graphql-como-tercer-adaptador-de-entrada.md)) |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
 | Empaquetado | Docker multietapa | La imagen final lleva solo el JRE y el `.jar` |
 | Despliegue | Render, plan gratuito | Sin tarjeta, con la configuración versionada en `render.yaml` |
@@ -183,6 +187,45 @@ La especificación es el contrato y la interfaz es solo un consumidor más: spri
 documento en `/v3/api-docs` y Scalar lo renderiza en `/docs`. Por eso la ruta nombra la función y
 no la herramienta. El porqué está en
 [`docs/adr/0004`](docs/adr/0004-scalar-como-interfaz-de-documentacion.md).
+
+## API GraphQL
+
+El mismo catálogo, por un tercer adaptador de entrada. El contrato es el esquema en
+[`src/main/resources/graphql/schema.graphqls`](src/main/resources/graphql/schema.graphqls), y la
+aplicación se niega a arrancar si un campo declarado ahí no tiene quien lo resuelva.
+
+| | Ruta | Qué es |
+|---|---|---|
+| Endpoint | `POST /graphql` | Punto único de entrada de consultas y mutaciones |
+| Consola | `/graphiql` | Explorador interactivo del esquema, el análogo de `/docs` |
+| Esquema publicado | `/graphql/schema` | El esquema efectivo, el análogo de `/v3/api-docs` |
+
+| Operación | Campo | Devuelve |
+|---|---|---|
+| Consulta | `productos(categoria: Categoria)` | Catálogo completo, o filtrado por categoría |
+| Consulta | `producto(id: ID!)` | Un producto, o `null` si no existe |
+| Consulta | `categorias` | Catálogo cerrado de categorías con su etiqueta |
+| Mutación | `crearProducto(entrada: ProductoInput!)` | El producto creado |
+| Mutación | `actualizarProducto(id: ID!, entrada: ProductoInput!)` | El producto actualizado |
+| Mutación | `eliminarProducto(id: ID!)` | `true` si existía y quedó eliminado |
+
+```graphql
+# El cliente declara qué campos necesita, y recibe exactamente esos.
+{ productos(categoria: PERIFERICOS) { nombre precio } }
+
+# Dos recursos en un solo viaje, que en REST serían dos llamadas.
+{ productos { nombre } categorias { codigo etiqueta } }
+```
+
+Los errores del dominio salen tipados en `extensions.classification`: `NOT_FOUND` cuando el
+producto no existe y `BAD_REQUEST` cuando los datos violan una invariante o el nombre está
+repetido. Una categoría inexistente ni siquiera llega al dominio: la rechaza el motor de GraphQL,
+porque el catálogo viaja como enumeración del esquema.
+
+GraphQL **no reemplaza** a REST: los dos conviven sobre el mismo puerto de aplicación y el núcleo
+no cambió una línea para publicar el protocolo nuevo. El porqué, las alternativas descartadas y la
+deuda que deja están en
+[`docs/adr/0006`](docs/adr/0006-graphql-como-tercer-adaptador-de-entrada.md).
 
 ### Contrato de error
 

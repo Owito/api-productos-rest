@@ -45,6 +45,25 @@ spring:
   jackson:
     default-property-inclusion: non_null
 
+  # Tercer adaptador de entrada. El esquema se carga de classpath:graphql/ y la
+  # aplicacion se niega a arrancar si un campo declarado ahi no tiene quien lo
+  # resuelva, asi que un desajuste entre contrato y codigo sale como fallo de
+  # arranque y no como un error en tiempo de consulta.
+  graphql:
+    path: /graphql
+    schema:
+      locations: classpath:graphql/
+      # Publica el esquema efectivo en /graphql/schema. Es documentacion, el
+      # equivalente de /v3/api-docs para el lado REST.
+      printer:
+        enabled: true
+    graphiql:
+      # Consola interactiva para explorar y probar el esquema desde el
+      # navegador, el analogo de Scalar en /docs. Viene empaquetada con el
+      # starter, no depende de ninguna CDN externa.
+      enabled: true
+      path: /graphiql
+
 server:
   port: ${PORT:8080}
   servlet:

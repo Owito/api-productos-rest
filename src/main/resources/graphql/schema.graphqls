@@ -1,0 +1,66 @@
+# Esquema GraphQL del catalogo de productos.
+#
+# Este archivo es el contrato: Spring for GraphQL lo carga desde
+# classpath:graphql/**/*.graphqls y falla al arrancar si algun campo declarado
+# aqui no tiene como resolverlo. Es la diferencia de fondo con REST, donde el
+# contrato lo deduce la herramienta a partir del codigo: aqui el esquema se
+# escribe primero y el codigo se acomoda a el.
+
+"Consultas de solo lectura sobre el catalogo."
+type Query {
+    "Catalogo completo, o solo una categoria si se indica."
+    productos(categoria: Categoria): [Producto!]!
+
+    "Un producto por su identificador. Devuelve null si no existe."
+    producto(id: ID!): Producto
+
+    "Catalogo cerrado de categorias, con su etiqueta legible."
+    categorias: [CategoriaInfo!]!
+}
+
+"Operaciones que cambian el estado del catalogo."
+type Mutation {
+    crearProducto(entrada: ProductoInput!): Producto!
+    actualizarProducto(id: ID!, entrada: ProductoInput!): Producto!
+
+    "Devuelve true si el producto existia y quedo eliminado."
+    eliminarProducto(id: ID!): Boolean!
+}
+
+type Producto {
+    id: ID!
+    nombre: String!
+    descripcion: String
+    precio: Float!
+    categoria: Categoria!
+    "Nombre legible de la categoria, para pintar en pantalla."
+    categoriaEtiqueta: String!
+}
+
+type CategoriaInfo {
+    codigo: Categoria!
+    etiqueta: String!
+}
+
+input ProductoInput {
+    nombre: String!
+    descripcion: String
+    precio: Float!
+    categoria: Categoria!
+}
+
+"""
+El catalogo de categorias es cerrado, asi que viaja como enumeracion del
+esquema y no como texto libre: una categoria inexistente la rechaza el propio
+motor de GraphQL antes de llegar al dominio.
+"""
+enum Categoria {
+    AUDIO
+    PERIFERICOS
+    PANTALLAS
+    COMPUTO
+    ALMACENAMIENTO
+    CONECTIVIDAD
+    ENERGIA
+    MOBILIARIO
+}

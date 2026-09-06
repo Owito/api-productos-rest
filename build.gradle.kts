@@ -39,6 +39,12 @@ dependencies {
 	implementation("com.scalar.maven:scalar-webmvc:0.6.65")
 	// Segundo adaptador de entrada: interfaz web renderizada en el servidor
 	implementation("org.springframework.boot:spring-boot-starter-thymeleaf")
+	// Tercer adaptador de entrada: API GraphQL. El starter trae GraphQL Java
+	// (el motor que analiza y ejecuta las consultas), Spring for GraphQL (el
+	// puente con el contenedor de Spring y las anotaciones @QueryMapping y
+	// @MutationMapping) y el transporte HTTP que publica el endpoint /graphql.
+	// La version la fija el BOM de Spring Boot, por eso no se declara aqui.
+	implementation("org.springframework.boot:spring-boot-starter-graphql")
 
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -55,6 +61,8 @@ dependencies {
 	runtimeOnly("org.postgresql:postgresql")
 
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
+	// GraphQlTester: ejecuta consultas contra el esquema sin levantar servidor
+	testImplementation("org.springframework.graphql:spring-graphql-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
