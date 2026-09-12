@@ -42,7 +42,7 @@ Publicar el CRUD de `Producto` por gRPC como cuarto adaptador de entrada del hex
 | Errores traducidos en la frontera, sin filtrar internos | Bean `GrpcExceptionHandler` que mapea las tres excepciones del dominio y devuelve null para el resto (Spring gRPC responde UNKNOWN) | ✅ |
 | Comentarios sin tildes en código | Aplica a `.kt`, `.proto`, `.yml` nuevos | ✅ |
 | Pruebas de integración por adaptador contra H2 | `ProductoGrpcAdapterTest` in-process, seis operaciones y tres errores | ✅ |
-| ADR por tecnología nueva, enlazado desde README y CLAUDE.md | `docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md` | ✅ |
+| ADR por tecnología nueva, enlazado desde README y la guía del repositorio | `docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md` | ✅ |
 | Cero código sombra | Sin streaming, sin TLS, sin cliente, sin despliegue: todo fuera de alcance en la spec | ✅ |
 
 Sin violaciones; la tabla de Complexity Tracking queda vacía.
@@ -78,7 +78,7 @@ src/test/kotlin/co/edu/poli/productos/infrastructure/input/grpc/
 docs/
 ├── adr/0007-grpc-como-cuarto-adaptador-de-entrada.md
 └── grpc-llamadas.md                              # guia de llamadas grpcurl para el video
-README.md, CLAUDE.md                              # secciones nuevas de gRPC
+README.md, guía del repo                              # secciones nuevas de gRPC
 ```
 
 **Structure Decision**: el adaptador sigue exactamente la estructura de `rest/` y `graphql/` (adaptador, `mapper`, `error`). No hay subpaquete `dto` porque los tipos del borde los genera protoc a partir del contrato en `build/generated/source/proto/main/{java,grpc}`; ese directorio es el equivalente de `dto/` y no se versiona.

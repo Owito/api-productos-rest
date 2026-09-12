@@ -26,7 +26,7 @@ repositories {
 
 // Spring gRPC fija las versiones de grpc-java y protobuf-java en su BOM. La
 // linea 0.12.x es la ultima construida sobre Spring Boot 3.5; la 1.x exige
-// Boot 4, que este proyecto no adopta (ver CLAUDE.md, "Trampas conocidas").
+// Boot 4, que este proyecto no adopta (ver la seccion de trampas conocidas de la guia del repositorio).
 val springGrpcVersion = "0.12.0"
 
 dependencyManagement {

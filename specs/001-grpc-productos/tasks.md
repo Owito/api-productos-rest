@@ -99,7 +99,7 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 ## Phase N: Polish & Cross-Cutting Concerns
 
 - [x] T015 [P] Actualizar `README.md`: descripción con cuatro adaptadores, fila de gRPC en la tabla de stack, sección de uso con grpcurl y Postman, enlace al ADR 0007 y a la guía
-- [x] T016 [P] Actualizar `CLAUDE.md`: comando de arranque con el puerto gRPC, estructura `infrastructure/input/grpc`, dónde viven los stubs generados, el manejador de errores gRPC en la lista de manejadores, conteo de pruebas y trampas nuevas
+- [x] T016 [P] Actualizar la guía del repositorio: comando de arranque con el puerto gRPC, estructura `infrastructure/input/grpc`, dónde viven los stubs generados, el manejador de errores gRPC en la lista de manejadores, conteo de pruebas y trampas nuevas
 - [x] T017 Ejecutar la validación de `quickstart.md` de punta a punta (bootRun + grpcurl) y registrar los resultados como evals en `specs/001-grpc-productos/evals.md`
 - [x] T018 Confirmar SC-004 con `git diff --stat main -- src/main/kotlin/.../domain .../application .../infrastructure/output` sin salida
 
