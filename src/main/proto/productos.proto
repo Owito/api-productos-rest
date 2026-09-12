@@ -1,0 +1,95 @@
+// Contrato del servicio gRPC de productos.
+//
+// Es el equivalente de schema.graphqls para GraphQL: se escribe primero y el
+// codigo se acomoda a el. protoc genera los mensajes y el esqueleto del
+// servicio en build/generated/source/proto/main, que no se versiona.
+
+syntax = "proto3";
+
+package productos.v1;
+
+import "google/protobuf/empty.proto";
+
+option java_package = "co.edu.poli.productos.infrastructure.input.grpc.proto";
+option java_multiple_files = true;
+option java_outer_classname = "ProductosProto";
+
+// Catalogo de productos: seis operaciones unarias, CRUD mas categorias.
+service ProductosService {
+  // Catalogo completo, o solo una categoria si se indica.
+  rpc ListarProductos (ListarProductosRequest) returns (ListarProductosResponse);
+  // Un producto por su identificador. NOT_FOUND si no existe.
+  rpc ObtenerProducto (ProductoIdRequest) returns (Producto);
+  // Alta. INVALID_ARGUMENT si viola una regla, ALREADY_EXISTS si el nombre ya esta.
+  rpc CrearProducto (ProductoInput) returns (Producto);
+  // Cambio de datos conservando el identificador.
+  rpc ActualizarProducto (ActualizarProductoRequest) returns (Producto);
+  // Baja. Responde vacio; NOT_FOUND si no existe.
+  rpc EliminarProducto (ProductoIdRequest) returns (google.protobuf.Empty);
+  // Catalogo cerrado de categorias con su etiqueta legible.
+  rpc ListarCategorias (google.protobuf.Empty) returns (ListarCategoriasResponse);
+}
+
+// El catalogo de categorias es cerrado, asi que viaja como enumeracion. En
+// proto3 el valor 0 es el que recibe el servidor cuando el cliente no manda
+// el campo, por eso se reserva como "sin especificar" y el adaptador lo
+// traduce a la regla del dominio "la categoria es obligatoria".
+enum Categoria {
+  CATEGORIA_SIN_ESPECIFICAR = 0;
+  AUDIO = 1;
+  PERIFERICOS = 2;
+  PANTALLAS = 3;
+  COMPUTO = 4;
+  ALMACENAMIENTO = 5;
+  CONECTIVIDAD = 6;
+  ENERGIA = 7;
+  MOBILIARIO = 8;
+}
+
+// Producto tal como sale en toda respuesta.
+message Producto {
+  int64 id = 1;
+  string nombre = 2;
+  optional string descripcion = 3;
+  // Texto decimal, por ejemplo "289900.00": proto3 no tiene tipo decimal y
+  // double perderia precision con dinero.
+  string precio = 4;
+  Categoria categoria = 5;
+  // Nombre legible de la categoria, para pintar en pantalla.
+  string categoria_etiqueta = 6;
+}
+
+// Datos de entrada de un alta o de un cambio.
+message ProductoInput {
+  string nombre = 1;
+  optional string descripcion = 2;
+  string precio = 3;
+  Categoria categoria = 4;
+}
+
+message ProductoIdRequest {
+  int64 id = 1;
+}
+
+message ActualizarProductoRequest {
+  int64 id = 1;
+  ProductoInput datos = 2;
+}
+
+message ListarProductosRequest {
+  // Ausente: catalogo completo. Presente: solo esa categoria.
+  optional Categoria categoria = 1;
+}
+
+message ListarProductosResponse {
+  repeated Producto productos = 1;
+}
+
+message CategoriaInfo {
+  Categoria codigo = 1;
+  string etiqueta = 2;
+}
+
+message ListarCategoriasResponse {
+  repeated CategoriaInfo categorias = 1;
+}

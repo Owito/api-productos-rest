@@ -64,6 +64,20 @@ spring:
       enabled: true
       path: /graphiql
 
+  # Cuarto adaptador de entrada: servicio gRPC. Corre en un servidor Netty
+  # propio, en un puerto distinto del HTTP de Tomcat, para que en la
+  # demostracion quede claro que son dos servicios de comunicacion
+  # distintos sobre el mismo nucleo. El despliegue en Render sigue
+  # publicando solo el puerto HTTP; gRPC se demuestra en local.
+  grpc:
+    server:
+      port: ${GRPC_PORT:9090}
+      # Reflexion del servidor: grpcurl y Postman listan el servicio y sus
+      # operaciones sin necesitar el .proto. Es documentacion en tiempo de
+      # ejecucion, como /graphql/schema para GraphQL.
+      reflection:
+        enabled: true
+
 server:
   port: ${PORT:8080}
   servlet:
