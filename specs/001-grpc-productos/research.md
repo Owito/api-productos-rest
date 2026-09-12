@@ -46,5 +46,5 @@ Fase 0 del plan. Cada decisión trae su fundamento verificado en esta sesión (2
 
 ## 8. Documentación
 
-- **Decision**: ADR 0007 con el patrón de los anteriores (contexto, decisión, consecuencias, alternativas); sección "gRPC" en README y en CLAUDE.md (cómo arrancar, puerto, herramientas, trampas); `docs/grpc-llamadas.md` con una llamada `grpcurl` por operación y por error, en el orden del guion del video.
+- **Decision**: ADR 0007 con el patrón de los anteriores (contexto, decisión, consecuencias, alternativas); sección "gRPC" en README y en la guía del repositorio (cómo arrancar, puerto, herramientas, trampas); `docs/grpc-llamadas.md` con una llamada `grpcurl` por operación y por error, en el orden del guion del video.
 - **Rationale**: FR-012 y el criterio de rúbrica "repositorio gRPC" (25 puntos).
