@@ -4,6 +4,10 @@ plugins {
 	kotlin("plugin.jpa") version "2.2.21"
 	id("org.springframework.boot") version "3.5.16"
 	id("io.spring.dependency-management") version "1.1.7"
+	// Compila los .proto de src/main/proto y genera los stubs Java del cuarto
+	// adaptador de entrada (gRPC). Los generados van a build/generated y no
+	// se versionan: el contrato es el .proto.
+	id("com.google.protobuf") version "0.9.4"
 }
 
 group = "co.edu.poli"
@@ -18,6 +22,17 @@ java {
 
 repositories {
 	mavenCentral()
+}
+
+// Spring gRPC fija las versiones de grpc-java y protobuf-java en su BOM. La
+// linea 0.12.x es la ultima construida sobre Spring Boot 3.5; la 1.x exige
+// Boot 4, que este proyecto no adopta (ver CLAUDE.md, "Trampas conocidas").
+val springGrpcVersion = "0.12.0"
+
+dependencyManagement {
+	imports {
+		mavenBom("org.springframework.grpc:spring-grpc-dependencies:$springGrpcVersion")
+	}
 }
 
 dependencies {
@@ -45,6 +60,14 @@ dependencies {
 	// @MutationMapping) y el transporte HTTP que publica el endpoint /graphql.
 	// La version la fija el BOM de Spring Boot, por eso no se declara aqui.
 	implementation("org.springframework.boot:spring-boot-starter-graphql")
+	// Cuarto adaptador de entrada: servicio gRPC. El starter trae grpc-java con
+	// el servidor Netty, registra como servicios los beans que extienden los
+	// stubs generados y publica el puerto de spring.grpc.server.port.
+	implementation("org.springframework.grpc:spring-grpc-server-spring-boot-starter")
+	// Reflexion del servidor: permite que grpcurl y Postman descubran el
+	// servicio y sus operaciones sin tener el .proto a mano. Es el analogo de
+	// /graphql/schema y de /v3/api-docs.
+	implementation("io.grpc:grpc-services")
 
 	implementation("org.jetbrains.kotlin:kotlin-reflect")
 	implementation("com.fasterxml.jackson.module:jackson-module-kotlin")
@@ -63,8 +86,35 @@ dependencies {
 	testImplementation("org.springframework.boot:spring-boot-starter-test")
 	// GraphQlTester: ejecuta consultas contra el esquema sin levantar servidor
 	testImplementation("org.springframework.graphql:spring-graphql-test")
+	// Transporte in-process para las pruebas del adaptador gRPC: el servidor
+	// y el cliente hablan en memoria, sin abrir un puerto de red.
+	testImplementation("org.springframework.grpc:spring-grpc-test")
 	testImplementation("org.jetbrains.kotlin:kotlin-test-junit5")
 	testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+}
+
+// Generacion de los stubs gRPC. protoc y el plugin de grpc-java se toman en
+// las mismas versiones que importa el BOM de Spring gRPC, para que el codigo
+// generado y la libreria en tiempo de ejecucion no se desalineen.
+protobuf {
+	protoc {
+		artifact = "com.google.protobuf:protoc:${dependencyManagement.importedProperties["protobuf-java.version"]}"
+	}
+	plugins {
+		create("grpc") {
+			artifact = "io.grpc:protoc-gen-grpc-java:${dependencyManagement.importedProperties["grpc.version"]}"
+		}
+	}
+	generateProtoTasks {
+		all().forEach { task ->
+			task.plugins {
+				create("grpc") {
+					// Sin la anotacion @Generated, que exige javax.annotation en el classpath
+					option("@generated=omit")
+				}
+			}
+		}
+	}
 }
 
 kotlin {

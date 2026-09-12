@@ -4,11 +4,12 @@ Backend con servicios RESTful que expone operaciones CRUD sobre la entidad `Prod
 construido con **Spring Boot + Kotlin** bajo **arquitectura hexagonal**, persistencia mediante
 **ORM (Spring Data JPA sobre Hibernate)** y base de datos **PostgreSQL** alojada en Neon.
 
-El mismo nucleo se expone por **tres adaptadores de entrada**: una API REST en `/api/v1/productos`,
-una interfaz web renderizada en el servidor en `/productos` y una **API GraphQL** en `/graphql`.
+El mismo nucleo se expone por **cuatro adaptadores de entrada**: una API REST en `/api/v1/productos`,
+una interfaz web renderizada en el servidor en `/productos`, una **API GraphQL** en `/graphql` y un
+**servicio gRPC** en el puerto `9090`.
 
 Módulo **Arquitectura de Aplicaciones Web (TIC51372)**: Unidad 2, actividad sumativa (REST y web),
-y Unidad 3, actividad formativa (GraphQL).
+Unidad 3, actividad formativa (GraphQL), y Unidad 4, actividad sumativa (GraphQL y gRPC).
 
 ## En línea
 
@@ -22,6 +23,7 @@ y Unidad 3, actividad formativa (GraphQL).
 | API GraphQL (consola) | <https://api-productos-rest.onrender.com/graphiql> |
 | Esquema GraphQL | <https://api-productos-rest.onrender.com/graphql/schema> |
 | Estado del servicio | <https://api-productos-rest.onrender.com/actuator/health> |
+| Servicio gRPC | solo en local, `localhost:9090` (Render publica un único puerto HTTP) |
 
 Corre en el plan gratuito de Render contra la base de datos de Neon. Si lleva rato sin visitas, la
 primera petición puede tardar cerca de un minuto: es el arranque en frío de la instancia, no un
@@ -46,6 +48,7 @@ contra este despliegue, no solo en local.
 | Documentación interactiva | Scalar | Lee esa especificación y deja probar los endpoints desde el navegador; trae su propio JavaScript, sin CDN ([ADR 0004](docs/adr/0004-scalar-como-interfaz-de-documentacion.md)) |
 | Interfaz web | Thymeleaf | Segundo adaptador de entrada, renderizado en el servidor, sin build de front |
 | API GraphQL | Spring for GraphQL sobre GraphQL Java | Tercer adaptador de entrada, con el esquema como contrato y GraphiQL como consola ([ADR 0006](docs/adr/0006-graphql-como-tercer-adaptador-de-entrada.md)) |
+| Servicio gRPC | Spring gRPC 0.12 sobre grpc-java y Netty | Cuarto adaptador de entrada, con el `.proto` como contrato, stubs generados en el build y reflexión para descubrirlo desde grpcurl o Postman ([ADR 0007](docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md)) |
 | Construcción | Gradle Wrapper (Kotlin DSL) | No exige Gradle instalado en la máquina |
 | Empaquetado | Docker multietapa | La imagen final lleva solo el JRE y el `.jar` |
 | Despliegue | Render, plan gratuito | Sin tarjeta, con la configuración versionada en `render.yaml` |
@@ -95,9 +98,10 @@ Las tres reglas que sostienen la estructura:
 3. **La aplicacion no conoce Spring.** `ProductoService` no lleva `@Service`: se registra como
    bean en `infrastructure/config/ConfiguracionDeCasosDeUso`.
 
-Los dos adaptadores de entrada son la prueba de que el patron funciona: agregar la interfaz web
-no cambio ni una linea del dominio, de la capa de aplicacion ni del adaptador de persistencia.
-Un producto creado desde el formulario aparece en la API, y al reves.
+Los cuatro adaptadores de entrada son la prueba de que el patron funciona: agregar la interfaz
+web, luego GraphQL y luego gRPC no cambio ni una linea del dominio, de la capa de aplicacion ni
+del adaptador de persistencia. Un producto creado desde el formulario aparece en la API, en
+GraphQL y en gRPC, y al reves.
 
 La consecuencia practica es que el nucleo se prueba sin levantar Spring, sin base de datos y sin
 HTTP, contra un adaptador falso en memoria. El razonamiento completo, con las alternativas
@@ -226,6 +230,57 @@ GraphQL **no reemplaza** a REST: los dos conviven sobre el mismo puerto de aplic
 no cambió una línea para publicar el protocolo nuevo. El porqué, las alternativas descartadas y la
 deuda que deja están en
 [`docs/adr/0006`](docs/adr/0006-graphql-como-tercer-adaptador-de-entrada.md).
+
+## Servicio gRPC
+
+El mismo catálogo, por un cuarto adaptador de entrada. El contrato es
+[`src/main/proto/productos.proto`](src/main/proto/productos.proto): protoc genera los mensajes y el
+esqueleto del servicio en cada build (en `build/generated`, que no se versiona), y
+`ProductoGrpcAdapter` los implementa delegando en el mismo puerto de aplicación que usan REST,
+web y GraphQL.
+
+| | Valor | Qué es |
+|---|---|---|
+| Puerto | `9090` (variable `GRPC_PORT`) | Servidor Netty propio, junto al Tomcat de 8080 |
+| Servicio | `productos.v1.ProductosService` | Seis operaciones unarias |
+| Reflexión | activa | grpcurl y Postman descubren el servicio sin el `.proto`, el análogo de `/graphql/schema` |
+| TLS | no | Demostración local, `-plaintext` |
+
+| Operación | Petición | Devuelve |
+|---|---|---|
+| `ListarProductos` | `{ "categoria": "AUDIO" }` (opcional) | Catálogo completo, o filtrado por categoría |
+| `ObtenerProducto` | `{ "id": 1 }` | El producto, o `NOT_FOUND` |
+| `CrearProducto` | `{ "nombre", "descripcion", "precio", "categoria" }` | El producto creado con su `id` |
+| `ActualizarProducto` | `{ "id", "datos": { ... } }` | El producto actualizado, mismo `id` |
+| `EliminarProducto` | `{ "id": 1 }` | Vacío, o `NOT_FOUND` |
+| `ListarCategorias` | vacío | Catálogo cerrado de categorías con su etiqueta |
+
+```bash
+grpcurl -plaintext localhost:9090 list
+grpcurl -plaintext -d '{"categoria":"PERIFERICOS"}' localhost:9090 productos.v1.ProductosService/ListarProductos
+grpcurl -plaintext -d '{"nombre":"Teclado 60","precio":"289900.00","categoria":"PERIFERICOS"}' localhost:9090 productos.v1.ProductosService/CrearProducto
+```
+
+Dos decisiones del contrato: el **precio viaja como texto decimal**, porque proto3 no tiene tipo
+decimal y `double` perdería precisión con dinero; y el **valor 0 de la enumeración `Categoria`
+está reservado** como "sin especificar", porque en proto3 es lo que llega cuando el cliente no manda
+el campo, y el adaptador lo traduce a la regla del dominio "la categoria es obligatoria".
+
+Los errores del dominio salen como estados gRPC: `NOT_FOUND` cuando el producto no existe,
+`ALREADY_EXISTS` cuando el nombre está repetido e `INVALID_ARGUMENT` cuando los datos violan una
+invariante, siempre con el mensaje del dominio. Cualquier otro fallo responde `UNKNOWN` sin
+exponer el mensaje interno. Una categoría fuera de la enumeración la rechaza el propio cliente
+antes de enviar la petición, como hace el motor de GraphQL.
+
+La guía completa de llamadas, en el orden del video, está en
+[`docs/grpc-llamadas.md`](docs/grpc-llamadas.md); el porqué de Spring gRPC 0.12 y del puerto
+propio, en [`docs/adr/0007`](docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md).
+
+> **Entrega de la Unidad 4.** La actividad pide el backend de dos aplicaciones, así que se entrega
+> en **dos repositorios**: este es la **aplicación GraphQL**, y la **aplicación gRPC** vive en
+> <https://github.com/Owito/api-productos-grpc>, con el mismo núcleo hexagonal y el servicio gRPC
+> como único adaptador de entrada. El adaptador gRPC se conserva también aquí porque es la
+> demostración de que el hexágono admite un protocolo más sin tocar el núcleo.
 
 ### Contrato de error
 
