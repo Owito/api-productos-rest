@@ -83,6 +83,8 @@ README.md, CLAUDE.md                              # secciones nuevas de gRPC
 
 **Structure Decision**: el adaptador sigue exactamente la estructura de `rest/` y `graphql/` (adaptador, `mapper`, `error`). No hay subpaquete `dto` porque los tipos del borde los genera protoc a partir del contrato en `build/generated/source/proto/main/{java,grpc}`; ese directorio es el equivalente de `dto/` y no se versiona.
 
+**Actualización por [CR-01](cambios/CR-01-dos-repositorios.md) (2026-09-12):** la entrega son dos repositorios. Este repositorio (`Owito/api-productos-rest`) queda como la **aplicación GraphQL** y conserva el adaptador gRPC como parte de la evolución del proyecto y de la historia de la feature. La **aplicación gRPC** se entrega en `Owito/api-productos-grpc`, con el mismo núcleo hexagonal copiado sin cambios y el servicio gRPC como único adaptador de entrada, sin capa web ni documentación OpenAPI. Los archivos del adaptador, el contrato y las pruebas son idénticos en los dos repositorios.
+
 ## Complexity Tracking
 
 Sin violaciones de la constitución que justificar.

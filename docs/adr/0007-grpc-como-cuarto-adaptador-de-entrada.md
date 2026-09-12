@@ -91,10 +91,26 @@ Dos decisiones de contrato que conviene conocer:
 - **gRPC sobre el servlet** (mismo puerto 8080). Serviría para exponerlo en Render, que publica
   un solo puerto, pero exige HTTP/2 en Tomcat y limita la configuración del servidor. Para una
   demostración local, dos puertos son más claros.
-- **Un segundo repositorio con una aplicación aparte.** Cumpliría la lectura literal de "dos
-  aplicaciones", pero duplicaría dominio, persistencia y migraciones, y contradiría el argumento
-  central de la arquitectura ya calificada en la Unidad 2. Si el tutor lo exige, el adaptador se
-  puede mover a un repositorio propio sin tocar el núcleo; la decisión queda registrada como
-  pregunta abierta en la spec de la feature.
 - **Stubs Kotlin con corrutinas (`grpc-kotlin`).** Están en el BOM, pero agregan un segundo
   generador y un modelo asíncrono que la spec no pide.
+
+## Enmienda del 2026-09-12: la entrega son dos repositorios
+
+Al cerrar la feature se decidió que la Unidad 4 se entrega como **dos repositorios**, uno por
+aplicación, en vez de un repositorio con dos adaptadores. La decisión está registrada en
+`specs/001-grpc-productos/cambios/CR-01-dos-repositorios.md`.
+
+| Aplicación | Repositorio |
+|---|---|
+| GraphQL | `Owito/api-productos-rest`, este mismo |
+| gRPC | `Owito/api-productos-grpc` |
+
+Lo que cambia es **dónde vive el código, no el código**: la aplicación gRPC lleva el mismo núcleo
+hexagonal, el mismo `productos.proto`, el mismo adaptador y las mismas 14 pruebas, sin capa web ni
+documentación OpenAPI. El adaptador gRPC se conserva también aquí porque es la historia real de la
+feature y porque es la demostración de que el hexágono admite un protocolo más sin tocar el núcleo.
+
+El costo aceptado es la duplicación del núcleo en dos repositorios. La alternativa, publicar el
+núcleo como librería compartida, se descartó por desproporcionada para una entrega académica: cada
+repositorio debe poder clonarse y ejecutarse solo, que es justamente lo que evalúa el criterio de
+repositorio de la rúbrica.

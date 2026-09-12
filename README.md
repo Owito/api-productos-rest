@@ -273,9 +273,14 @@ exponer el mensaje interno. Una categoría fuera de la enumeración la rechaza e
 antes de enviar la petición, como hace el motor de GraphQL.
 
 La guía completa de llamadas, en el orden del video, está en
-[`docs/grpc-llamadas.md`](docs/grpc-llamadas.md); el porqué de Spring gRPC 0.12, del puerto propio
-y de un solo repositorio, en
-[`docs/adr/0007`](docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md).
+[`docs/grpc-llamadas.md`](docs/grpc-llamadas.md); el porqué de Spring gRPC 0.12 y del puerto
+propio, en [`docs/adr/0007`](docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md).
+
+> **Entrega de la Unidad 4.** La actividad pide el backend de dos aplicaciones, así que se entrega
+> en **dos repositorios**: este es la **aplicación GraphQL**, y la **aplicación gRPC** vive en
+> <https://github.com/Owito/api-productos-grpc>, con el mismo núcleo hexagonal y el servicio gRPC
+> como único adaptador de entrada. El adaptador gRPC se conserva también aquí porque es la
+> demostración de que el hexágono admite un protocolo más sin tocar el núcleo.
 
 ### Contrato de error
 

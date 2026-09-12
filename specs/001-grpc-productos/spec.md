@@ -4,7 +4,7 @@
 
 **Created**: 2026-09-12
 
-**Status**: Draft
+**Status**: Implementada · modificada por [CR-01](cambios/CR-01-dos-repositorios.md) el 2026-09-12 (la entrega son dos repositorios)
 
 **Input**: User description: "Exponer el CRUD de Producto también por gRPC como cuarto adaptador de entrada sobre el mismo núcleo hexagonal, para la Actividad de entrega 2 (Unidad 4) del módulo Arquitectura de Aplicaciones Web (TIC51372)."
 
@@ -115,8 +115,8 @@ Quien sustenta el trabajo abre una herramienta de cliente gRPC, descubre los ser
 
 ## Assumptions
 
-- Modalidad de entrega: se asume grupal como en las Unidades 2 y 3 (mismos integrantes), con confirmación pendiente del tutor. No cambia el alcance técnico.
-- "Dos aplicaciones" del enunciado se interpreta como dos servicios de comunicación distintos sobre el mismo backend (dos adaptadores de entrada en un solo repositorio), coherente con la arquitectura hexagonal ya calificada en la Unidad 2. Si el tutor exige dos repositorios, el mismo código se separa después sin tocar el dominio; queda como pregunta abierta para el encuentro sincrónico, no como trabajo de esta iteración.
+- Modalidad de entrega: **grupal**, confirmada el 2026-09-12 por Carlos Guerra. Integrantes: Carlos Guerra, Rafael Gutiérrez Correales y Paulo Reyes Rodríguez, los mismos de las Unidades 2 y 3.
+- "Dos aplicaciones" del enunciado se resuelve como **dos repositorios**, uno por aplicación (ver [CR-01](cambios/CR-01-dos-repositorios.md)): `Owito/api-productos-rest` es la aplicación GraphQL y `Owito/api-productos-grpc` la aplicación gRPC. Las dos comparten el mismo núcleo hexagonal, copiado sin cambios.
 - La demostración es local: el despliegue en Render sigue publicando solo HTTP en 8080 y no expone el puerto gRPC. El video muestra el servicio corriendo en la máquina de quien sustenta.
 - La herramienta de pruebas para el video es grpcurl o Postman; la guía de llamadas se escribe para grpcurl y las mismas llamadas se replican en Postman importando el contrato o por descubrimiento.
 - El identificador del producto viaja como entero de 64 bits, igual que en la base de datos.
@@ -126,6 +126,7 @@ Quien sustenta el trabajo abre una herramienta de cliente gRPC, descubre los ser
 
 - Streaming (de servidor, de cliente o bidireccional): el enunciado pide CRUD punto a punto.
 - Autenticación, autorización o TLS en gRPC: la demo pública sigue sin autenticación por decisión previa del proyecto.
-- Un cliente gRPC dentro de la aplicación o un segundo repositorio.
+- Un cliente gRPC dentro de la aplicación.
 - Publicar gRPC en Render o en otra plataforma.
 - Cualquier cambio a los adaptadores REST, web o GraphQL.
+- Extraer el núcleo compartido a una librería publicada: los dos repositorios llevan su propia copia, que es lo que permite que cada aplicación se clone y se ejecute sola (ver [CR-01](cambios/CR-01-dos-repositorios.md)).
