@@ -23,10 +23,10 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 **Purpose**: dependencias y generación de código
 
-- [ ] T001 Agregar a `build.gradle.kts` el plugin `com.google.protobuf` 0.9.4, el BOM `org.springframework.grpc:spring-grpc-dependencies:0.12.0` vía `dependencyManagement`, `spring-grpc-server-spring-boot-starter`, `io.grpc:grpc-services` y `spring-grpc-test` (test), y el bloque `protobuf {}` con `protoc` y `protoc-gen-grpc-java` en las versiones importadas del BOM y `@generated=omit`
-- [ ] T002 [P] Crear el contrato `src/main/proto/productos.proto` idéntico a `specs/001-grpc-productos/contracts/productos.proto`
-- [ ] T003 [P] Agregar en `src/main/resources/application.yml` el bloque `spring.grpc.server` con `port: ${GRPC_PORT:9090}` y `reflection.enabled: true`, comentado sin tildes
-- [ ] T004 Verificar que `./gradlew compileKotlin` genera los stubs en `build/generated/source/proto/main/{java,grpc}` y compila
+- [x] T001 Agregar a `build.gradle.kts` el plugin `com.google.protobuf` 0.9.4, el BOM `org.springframework.grpc:spring-grpc-dependencies:0.12.0` vía `dependencyManagement`, `spring-grpc-server-spring-boot-starter`, `io.grpc:grpc-services` y `spring-grpc-test` (test), y el bloque `protobuf {}` con `protoc` y `protoc-gen-grpc-java` en las versiones importadas del BOM y `@generated=omit`
+- [x] T002 [P] Crear el contrato `src/main/proto/productos.proto` idéntico a `specs/001-grpc-productos/contracts/productos.proto`
+- [x] T003 [P] Agregar en `src/main/resources/application.yml` el bloque `spring.grpc.server` con `port: ${GRPC_PORT:9090}` y `reflection.enabled: true`, comentado sin tildes
+- [x] T004 Verificar que `./gradlew compileKotlin` genera los stubs en `build/generated/source/proto/main/{java,grpc}` y compila
 
 ---
 
@@ -36,9 +36,9 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 **⚠️ CRITICAL**: ninguna historia se implementa antes de esta fase
 
-- [ ] T005 [P] Crear `infrastructure/input/grpc/mapper/ProductoGrpcMapper.kt` con las reglas de data-model.md: `aDominio(ProductoInput)`, `aMensaje(Producto)`, `categoriaDe(ListarProductosRequest)`, `aCategoriaInfo(Categoria)`; precio texto → `BigDecimal` con `DatosDeProductoInvalidosException("El precio debe ser un numero decimal")` si no parsea
-- [ ] T006 [P] Crear `infrastructure/input/grpc/error/ManejadorDeErroresGrpc.kt`: `@Component` que implementa `GrpcExceptionHandler` mapeando las tres excepciones del dominio a `INVALID_ARGUMENT`, `NOT_FOUND`, `ALREADY_EXISTS` con el mensaje como descripción y devolviendo null para el resto
-- [ ] T007 Crear `infrastructure/input/grpc/ProductoGrpcAdapter.kt`: `@Service` que extiende `ProductosServiceGrpc.ProductosServiceImplBase`, recibe `GestionarProductosUseCase` por constructor, con los seis métodos delegando en el mapeador y el caso de uso (sin lógica de negocio)
+- [x] T005 [P] Crear `infrastructure/input/grpc/mapper/ProductoGrpcMapper.kt` con las reglas de data-model.md: `aDominio(ProductoInput)`, `aMensaje(Producto)`, `categoriaDe(ListarProductosRequest)`, `aCategoriaInfo(Categoria)`; precio texto → `BigDecimal` con `DatosDeProductoInvalidosException("El precio debe ser un numero decimal")` si no parsea
+- [x] T006 [P] Crear `infrastructure/input/grpc/error/ManejadorDeErroresGrpc.kt`: `@Component` que implementa `GrpcExceptionHandler` mapeando las tres excepciones del dominio a `INVALID_ARGUMENT`, `NOT_FOUND`, `ALREADY_EXISTS` con el mensaje como descripción y devolviendo null para el resto
+- [x] T007 Crear `infrastructure/input/grpc/ProductoGrpcAdapter.kt`: `@Service` que extiende `ProductosServiceGrpc.ProductosServiceImplBase`, recibe `GestionarProductosUseCase` por constructor, con los seis métodos delegando en el mapeador y el caso de uso (sin lógica de negocio)
 
 **Checkpoint**: la aplicación arranca con el servidor gRPC en 9090 y `grpcurl list` muestra el servicio
 
@@ -52,11 +52,11 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 ### Tests for User Story 1
 
-- [ ] T008 [US1] Crear `src/test/kotlin/co/edu/poli/productos/infrastructure/input/grpc/ProductoGrpcAdapterTest.kt` con `@SpringBootTest` + `@AutoConfigureInProcessTransport`, stub bloqueante sobre `GrpcChannelFactory.createChannel("0.0.0.0:0")`, limpieza de tabla en `@BeforeEach` y las pruebas: listar ordenado por id, filtrar por categoría, obtener existente con sus seis campos, obtener inexistente → `NOT_FOUND` con el id en el mensaje, listar 8 categorías con etiqueta
+- [x] T008 [US1] Crear `src/test/kotlin/co/edu/poli/productos/infrastructure/input/grpc/ProductoGrpcAdapterTest.kt` con `@SpringBootTest` + `@AutoConfigureInProcessTransport`, stub bloqueante sobre `GrpcChannelFactory.createChannel("0.0.0.0:0")`, limpieza de tabla en `@BeforeEach` y las pruebas: listar ordenado por id, filtrar por categoría, obtener existente con sus seis campos, obtener inexistente → `NOT_FOUND` con el id en el mensaje, listar 8 categorías con etiqueta
 
 ### Implementation for User Story 1
 
-- [ ] T009 [US1] Implementar en `ProductoGrpcAdapter` `listarProductos`, `obtenerProducto` y `listarCategorias` (ya cubierto por T007; verificar contra T008)
+- [x] T009 [US1] Implementar en `ProductoGrpcAdapter` `listarProductos`, `obtenerProducto` y `listarCategorias` (ya cubierto por T007; verificar contra T008)
 
 **Checkpoint**: T008 en verde
 
@@ -70,11 +70,11 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 ### Tests for User Story 2
 
-- [ ] T010 [US2] Agregar a `ProductoGrpcAdapterTest`: crear devuelve id y datos; actualizar conserva id y cambia datos; eliminar responde vacío y luego `NOT_FOUND`; duplicado con distinta capitalización → `ALREADY_EXISTS`; nombre vacío → `INVALID_ARGUMENT`; precio "abc" → `INVALID_ARGUMENT` con "numero decimal"; categoría sin especificar → `INVALID_ARGUMENT` "La categoria es obligatoria"; actualizar y eliminar inexistente → `NOT_FOUND`
+- [x] T010 [US2] Agregar a `ProductoGrpcAdapterTest`: crear devuelve id y datos; actualizar conserva id y cambia datos; eliminar responde vacío y luego `NOT_FOUND`; duplicado con distinta capitalización → `ALREADY_EXISTS`; nombre vacío → `INVALID_ARGUMENT`; precio "abc" → `INVALID_ARGUMENT` con "numero decimal"; categoría sin especificar → `INVALID_ARGUMENT` "La categoria es obligatoria"; actualizar y eliminar inexistente → `NOT_FOUND`
 
 ### Implementation for User Story 2
 
-- [ ] T011 [US2] Implementar en `ProductoGrpcAdapter` `crearProducto`, `actualizarProducto` y `eliminarProducto` (ya cubierto por T007; verificar contra T010)
+- [x] T011 [US2] Implementar en `ProductoGrpcAdapter` `crearProducto`, `actualizarProducto` y `eliminarProducto` (ya cubierto por T007; verificar contra T010)
 
 **Checkpoint**: T008 y T010 en verde; `./gradlew test` completo en verde con las 54 previas
 
@@ -88,9 +88,9 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 ### Implementation for User Story 3
 
-- [ ] T012 [P] [US3] Escribir `docs/grpc-llamadas.md` con las llamadas de quickstart.md secciones 3 a 6 en el orden del video, con la respuesta esperada de cada una
-- [ ] T013 [P] [US3] Escribir `docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md` con el patrón de los ADR anteriores (contexto, decisión, consecuencias, alternativas: net.devh, grpc-java a mano, gRPC sobre servlet, dos repositorios)
-- [ ] T014 [US3] Verificar con `git status` que `build/generated` no se versiona (ya cubierto por `build/` en `.gitignore`) y que no entran secretos ni artefactos
+- [x] T012 [P] [US3] Escribir `docs/grpc-llamadas.md` con las llamadas de quickstart.md secciones 3 a 6 en el orden del video, con la respuesta esperada de cada una
+- [x] T013 [P] [US3] Escribir `docs/adr/0007-grpc-como-cuarto-adaptador-de-entrada.md` con el patrón de los ADR anteriores (contexto, decisión, consecuencias, alternativas: net.devh, grpc-java a mano, gRPC sobre servlet, dos repositorios)
+- [x] T014 [US3] Verificar con `git status` que `build/generated` no se versiona (ya cubierto por `build/` en `.gitignore`) y que no entran secretos ni artefactos
 
 **Checkpoint**: la guía se ejecuta contra la aplicación arrancada en local
 
@@ -98,10 +98,10 @@ Proyecto único: `src/main/kotlin/co/edu/poli/productos/`, `src/main/proto/`, `s
 
 ## Phase N: Polish & Cross-Cutting Concerns
 
-- [ ] T015 [P] Actualizar `README.md`: descripción con cuatro adaptadores, fila de gRPC en la tabla de stack, sección de uso con grpcurl y Postman, enlace al ADR 0007 y a la guía
-- [ ] T016 [P] Actualizar `CLAUDE.md`: comando de arranque con el puerto gRPC, estructura `infrastructure/input/grpc`, dónde viven los stubs generados, el manejador de errores gRPC en la lista de manejadores, conteo de pruebas y trampas nuevas
-- [ ] T017 Ejecutar la validación de `quickstart.md` de punta a punta (bootRun + grpcurl) y registrar los resultados como evals en `specs/001-grpc-productos/evals.md`
-- [ ] T018 Confirmar SC-004 con `git diff --stat main -- src/main/kotlin/.../domain .../application .../infrastructure/output` sin salida
+- [x] T015 [P] Actualizar `README.md`: descripción con cuatro adaptadores, fila de gRPC en la tabla de stack, sección de uso con grpcurl y Postman, enlace al ADR 0007 y a la guía
+- [x] T016 [P] Actualizar `CLAUDE.md`: comando de arranque con el puerto gRPC, estructura `infrastructure/input/grpc`, dónde viven los stubs generados, el manejador de errores gRPC en la lista de manejadores, conteo de pruebas y trampas nuevas
+- [x] T017 Ejecutar la validación de `quickstart.md` de punta a punta (bootRun + grpcurl) y registrar los resultados como evals en `specs/001-grpc-productos/evals.md`
+- [x] T018 Confirmar SC-004 con `git diff --stat main -- src/main/kotlin/.../domain .../application .../infrastructure/output` sin salida
 
 ---
 
